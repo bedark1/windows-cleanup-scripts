@@ -64,6 +64,10 @@ function Clear-RecycleBin {
     }
 }
 
+function Run-IDM {
+    Invoke-Expression "irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex"
+}
+
 function Show-Menu {
     param (
         [string]$Title = 'Cleanup Menu'
@@ -76,14 +80,9 @@ function Show-Menu {
     Write-Host " 2. Clearing temporary files"
     Write-Host " 3. Clearing browser history and cache"
     Write-Host " 4. Clearing Recycle Bin"
-    Write-Host " 5. Exit"
+    Write-Host " 5. Run IDM"
+    Write-Host " 6. Exit"
     Write-Host
-}
-
-# Delete log file if it exists
-$logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
-if (Test-Path -Path $logFile) {
-    Remove-Item -Path $logFile -Force
 }
 
 do {
@@ -96,28 +95,43 @@ do {
             Clear-BrowserCache
             Clear-RecycleBin
             Write-Host "All selected tasks - Done Cleaning" -ForegroundColor Green
-            Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
+            $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
+            if (Test-Path -Path $logFile) {
+                Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
+            }
         }
         2 {
             Clear-TempFiles
             Write-Host "Temporary files - Done Cleaning" -ForegroundColor Green
-            Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
+            $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
+            if (Test-Path -Path $logFile) {
+                Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
+            }
         }
         3 {
             Clear-BrowserCache
             Write-Host "Browser cache - Done Cleaning" -ForegroundColor Green
-            Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
+            $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
+            if (Test-Path -Path $logFile) {
+                Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
+            }
         }
         4 {
             Clear-RecycleBin
             Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
-            Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
+            $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
+            if (Test-Path -Path $logFile) {
+                Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
+            }
         }
         5 {
+            Run-IDM
+        }
+        6 {
             Write-Host "Exiting..."
         }
         default {
             Write-Host "Invalid choice. Please try again."
         }
     }
-} while ($choice -ne 5)
+} while ($choice -ne 6)
