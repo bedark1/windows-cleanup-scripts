@@ -71,6 +71,20 @@ function Run-IDM {
     Write-Host "IDM cleanup script executed." -ForegroundColor Green
 }
 
+function Activate-Windows {
+    $scriptUrl = "https://get.activated.win"
+    $command = "irm $scriptUrl | iex"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
+    Write-Host "Windows activation script executed." -ForegroundColor Green
+}
+
+function Activate-Office {
+    $scriptUrl = "https://get.activated.win"
+    $command = "irm $scriptUrl | iex"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
+    Write-Host "Office activation script executed." -ForegroundColor Green
+}
+
 function Show-Menu {
     param (
         [string]$Title = 'Cleanup Menu'
@@ -83,8 +97,10 @@ function Show-Menu {
     Write-Host " 2. Clearing temporary files"
     Write-Host " 3. Clearing browser history and cache"
     Write-Host " 4. Clearing Recycle Bin"
-    Write-Host " 5. Run IDM"
-    Write-Host " 6. Exit"
+    Write-Host " 5. Install IDM"
+    Write-Host " 6. Activate Windows"
+    Write-Host " 7. Activate Office"
+    Write-Host " 8. Exit"
     Write-Host
 }
 
@@ -131,10 +147,16 @@ do {
             Run-IDM
         }
         6 {
+            Activate-Windows
+        }
+        7 {
+            Activate-Office
+        }
+        8 {
             Write-Host "Exiting..."
         }
         default {
             Write-Host "Invalid choice. Please try again."
         }
     }
-} while ($choice -ne 6)
+} while ($choice -ne 8)
