@@ -65,7 +65,7 @@ function Clear-RecycleBin {
 }
 
 function Run-IDM {
-    Invoke-Expression "irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex"
+    Start-Process powershell -ArgumentList "-NoExit -Command irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex"
     Write-Host "IDM cleanup script executed." -ForegroundColor Green
 }
 
