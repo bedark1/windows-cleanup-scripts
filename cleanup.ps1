@@ -67,10 +67,9 @@ function Clear-RecycleBin {
 function Run-IDM {
     $scriptUrl = "https://massgrave.dev/ias"
     $command = "irm $scriptUrl | iex"
-    Start-Process powershell -ArgumentList "-NoExit -Command `"$command`"" -Verb RunAs
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
     Write-Host "IDM cleanup script executed." -ForegroundColor Green
 }
-
 
 function Show-Menu {
     param (
