@@ -1,17 +1,19 @@
+# Define a global log file path
+$global:logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
+
 function Clear-TempFiles {
     $tempPaths = @(
         "$env:windir\Temp\*",
         "$env:LOCALAPPDATA\Temp\*"
     )
-    $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
 
     Write-Host "TempFiles - Clearing" -ForegroundColor Yellow
     foreach ($path in $tempPaths) {
         Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
             try {
-                Remove-Item -Path $_.FullName -Force -ErrorAction Stop
+                Remove-Item -Path $_.FullName -Force -Recurse -ErrorAction Stop
             } catch {
-                Add-Content -Path $logFile -Value "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
+                Add-Content -Path $global:logFile -Value "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
             }
         }
     }
@@ -23,15 +25,14 @@ function Clear-BrowserCache {
         "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache\*",
         "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache\*"
     )
-    $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
 
     Write-Host "BrowserData - Clearing" -ForegroundColor Yellow
     foreach ($path in $browserPaths) {
         Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
             try {
-                Remove-Item -Path $_.FullName -Force -ErrorAction Stop
+                Remove-Item -Path $_.FullName -Force -Recurse -ErrorAction Stop
             } catch {
-                Add-Content -Path $logFile -Value "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
+                Add-Content -Path $global:logFile -Value "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
             }
         }
     }
@@ -39,8 +40,6 @@ function Clear-BrowserCache {
 }
 
 function Clear-RecycleBin {
-    $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
-
     Write-Host "RecycleBin - Clearing" -ForegroundColor Yellow
     try {
         if ($PSVersionTable.PSVersion.Major -lt 5) {
@@ -54,13 +53,13 @@ function Clear-RecycleBin {
             try {
                 $_.InvokeVerb("delete")
             } catch {
-                Add-Content -Path $logFile -Value "Could not delete item: $($_.Name) - $($_.Exception.Message)"
+                Add-Content -Path $global:logFile -Value "Could not delete item: $($_.Name) - $($_.Exception.Message)"
             }
         }
         [Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
         Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
     } catch {
-        Add-Content -Path $logFile -Value "Could not empty the Recycle Bin. Reason: $_.Exception.Message"
+        Add-Content -Path $global:logFile -Value "Could not empty the Recycle Bin. Reason: $_.Exception.Message"
     }
 }
 
@@ -104,6 +103,12 @@ function Show-Menu {
     Write-Host
 }
 
+function Check-LogFile {
+    if (Test-Path -Path $global:logFile) {
+        Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
+    }
+}
+
 do {
     Show-Menu
     $choice = Read-Host 'Enter your choice'
@@ -114,34 +119,22 @@ do {
             Clear-BrowserCache
             Clear-RecycleBin
             Write-Host "All selected tasks - Done Cleaning" -ForegroundColor Green
-            $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
-            if (Test-Path -Path $logFile) {
-                Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
-            }
+            Check-LogFile
         }
         2 {
             Clear-TempFiles
             Write-Host "Temporary files - Done Cleaning" -ForegroundColor Green
-            $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
-            if (Test-Path -Path $logFile) {
-                Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
-            }
+            Check-LogFile
         }
         3 {
             Clear-BrowserCache
             Write-Host "Browser cache - Done Cleaning" -ForegroundColor Green
-            $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
-            if (Test-Path -Path $logFile) {
-                Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
-            }
+            Check-LogFile
         }
         4 {
             Clear-RecycleBin
             Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
-            $logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
-            if (Test-Path -Path $logFile) {
-                Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
-            }
+            Check-LogFile
         }
         5 {
             Run-IDM
