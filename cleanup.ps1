@@ -1,5 +1,3 @@
-$global:logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
-
 function Is-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
@@ -7,8 +5,8 @@ function Is-Administrator {
 }
 
 function Restart-AsAdmin {
-    $scriptPath = $MyInvocation.MyCommand.Path
-    Start-Process powershell -ArgumentList "-NoExit -File `"$scriptPath`"" -Verb RunAs
+    $command = "irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
     exit
 }
 
@@ -38,7 +36,7 @@ function Clear-TempFiles {
             try {
                 Remove-Item -Path $_.FullName -Force -Recurse -ErrorAction Stop
             } catch {
-                Add-Content -Path $global:logFile -Value "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
+                Write-Host "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
             }
         }
     }
@@ -57,7 +55,7 @@ function Clear-BrowserCache {
             try {
                 Remove-Item -Path $_.FullName -Force -Recurse -ErrorAction Stop
             } catch {
-                Add-Content -Path $global:logFile -Value "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
+                Write-Host "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
             }
         }
     }
@@ -78,13 +76,13 @@ function Clear-RecycleBin {
             try {
                 $_.InvokeVerb("delete")
             } catch {
-                Add-Content -Path $global:logFile -Value "Could not delete item: $($_.Name) - $($_.Exception.Message)"
+                Write-Host "Could not delete item: $($_.Name) - $($_.Exception.Message)"
             }
         }
         [Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
         Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
     } catch {
-        Add-Content -Path $global:logFile -Value "Could not empty the Recycle Bin. Reason: $_.Exception.Message"
+        Write-Host "Could not empty the Recycle Bin. Reason: $_.Exception.Message"
     }
 }
 
