@@ -185,9 +185,10 @@ function Show-MainMenu {
     Write-Host " 5. Install IDM"
     Write-Host " Microsoft:" -ForegroundColor Blue
     Write-Host " 6. Install / Activate Windows"
-    Write-Host " 7. Install / Activate Office"
-    Write-Host "`n 8. Exit`n" -ForegroundColor Red
+    Write-Host " 7. Install / Activate Office`n"
+    Write-Host " 8. Exit`n" -ForegroundColor Red
 }
+
 
 
 # Main script loop
