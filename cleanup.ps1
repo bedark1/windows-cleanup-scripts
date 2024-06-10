@@ -120,56 +120,54 @@ function Activate-Office {
     Write-Host "Office activation script executed." -ForegroundColor Green
 }
 
-function DirectX-Tweak {
-    # Define the registry keys and values for DirectX tweak
-    $regKey = "HKLM\SOFTWARE\Microsoft\DirectX"
-    $regValues = @{
-        "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE" = "dword:00000001"
-        "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS" = "dword:00000001"
-        "D3D12_RESOURCE_ALIGNMENT" = "dword:00000001"
-        "D3D11_MULTITHREADED" = "dword:00000001"
-        "D3D12_MULTITHREADED" = "dword:00000001"
-        "D3D11_DEFERRED_CONTEXTS" = "dword:00000001"
-        "D3D12_DEFERRED_CONTEXTS" = "dword:00000001"
-        "D3D11_ALLOW_TILING" = "dword:00000001"
-        "D3D11_ENABLE_DYNAMIC_CODEGEN" = "dword:00000001"
-        "D3D12_ALLOW_TILING" = "dword:00000001"
-        "D3D12_CPU_PAGE_TABLE_ENABLED" = "dword:00000001"
-        "D3D12_HEAP_SERIALIZATION_ENABLED" = "dword:00000001"
-        "D3D12_MAP_HEAP_ALLOCATIONS" = "dword:00000001"
-        "D3D12_RESIDENCY_MANAGEMENT_ENABLED" = "dword:00000001"
+ffunction DirectXTweak {
+    Write-Host "DirectX Tweak - Applying registry modifications..."
+    $registryPath = "HKLM:\SOFTWARE\Microsoft\DirectX"
+
+    # List of registry values to modify
+    $registryValues = @{
+        "D3D11_ALLOW_TILING" = 1
+        "D3D12_CPU_PAGE_TABLE_ENABLED" = 1
+        "D3D12_ALLOW_TILING" = 1
+        "D3D12_HEAP_SERIALIZATION_ENABLED" = 1
+        "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE" = 1
+        "D3D11_DEFERRED_CONTEXTS" = 1
+        "D3D12_MAP_HEAP_ALLOCATIONS" = 1
+        "D3D11_ENABLE_DYNAMIC_CODEGEN" = 1
+        "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS" = 1
+        "D3D12_MULTITHREADED" = 1
+        "D3D12_RESIDENCY_MANAGEMENT_ENABLED" = 1
+        "D3D11_MULTITHREADED" = 1
+        "D3D12_RESOURCE_ALIGNMENT" = 1
+        "D3D12_DEFERRED_CONTEXTS" = 1
     }
 
-    # Check for administrative privileges
-    if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-        Write-Host "You must have administrator rights to perform this action." -ForegroundColor Red
-        return
+    # Check if registry key exists, if not, create it
+    if (!(Test-Path $registryPath)) {
+        New-Item -Path $registryPath -ItemType Directory | Out-Null
     }
 
-    Write-Host "DirectX Tweak - Applying registry modifications..." -ForegroundColor Yellow
-    Write-Host "Registry Key: $regKey"
-    
-    # Check if the registry key exists, and create it if it doesn't
-    if (-not (Test-Path $regKey)) {
-        Write-Host "Registry key does not exist. Creating it..."
-        New-Item -Path $regKey -Force | Out-Null
-    }
-
-    foreach ($value in $regValues.GetEnumerator()) {
-        $name = $value.Key
-        $data = $value.Value
-        Write-Host "Modifying registry value: $name"
-        try {
-            Set-ItemProperty -Path $regKey -Name $name -Value $data -ErrorAction Stop
-            Write-Host "Registry value modified: $name" -ForegroundColor Green
-        } catch {
-            Write-Host "Failed to modify registry value: $name" -ForegroundColor Red
-            Write-Host "Error: $_" -ForegroundColor Red
-            Add-Content -Path $global:logFile -Value "Failed to modify registry value: $name - $($_.Exception.Message)"
+    # Add missing registry values
+    foreach ($valueName in $registryValues.Keys) {
+        if (-not (Test-Path "$registryPath\$valueName")) {
+            New-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -PropertyType DWORD | Out-Null
         }
     }
-    Write-Host "DirectX Tweak - Registry modifications complete." -ForegroundColor Green
+
+    # Modify existing registry values
+    foreach ($valueName in $registryValues.Keys) {
+        try {
+            Set-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -ErrorAction Stop
+            Write-Host "Modified registry value: $valueName"
+        } catch {
+            Write-Host "Failed to modify registry value: $valueName"
+            Write-Host "Error: $_"
+        }
+    }
+
+    Write-Host "DirectX Tweak - Registry modifications complete."
 }
+
 
 
 
