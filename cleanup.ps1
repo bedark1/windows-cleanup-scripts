@@ -124,20 +124,25 @@ function DirectX-Tweak {
     # Define the registry keys and values for DirectX tweak
     $regKey = "HKLM\SOFTWARE\Microsoft\DirectX"
     $regValues = @{
-        "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE"="dword:00000001"
-        "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS"="dword:00000001"
-        "D3D12_RESOURCE_ALIGNMENT"="dword:00000001"
-        "D3D11_MULTITHREADED"="dword:00000001"
-        "D3D12_MULTITHREADED"="dword:00000001"
-        "D3D11_DEFERRED_CONTEXTS"="dword:00000001"
-        "D3D12_DEFERRED_CONTEXTS"="dword:00000001"
-        "D3D11_ALLOW_TILING"="dword:00000001"
-        "D3D11_ENABLE_DYNAMIC_CODEGEN"="dword:00000001"
-        "D3D12_ALLOW_TILING"="dword:00000001"
-        "D3D12_CPU_PAGE_TABLE_ENABLED"="dword:00000001"
-        "D3D12_HEAP_SERIALIZATION_ENABLED"="dword:00000001"
-        "D3D12_MAP_HEAP_ALLOCATIONS"="dword:00000001"
-        "D3D12_RESIDENCY_MANAGEMENT_ENABLED"="dword:00000001"
+        "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE"=1
+        "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS"=1
+        "D3D12_RESOURCE_ALIGNMENT"=1
+        "D3D11_MULTITHREADED"=1
+        "D3D12_MULTITHREADED"=1
+        "D3D11_DEFERRED_CONTEXTS"=1
+        "D3D12_DEFERRED_CONTEXTS"=1
+        "D3D11_ALLOW_TILING"=1
+        "D3D11_ENABLE_DYNAMIC_CODEGEN"=1
+        "D3D12_ALLOW_TILING"=1
+        "D3D12_CPU_PAGE_TABLE_ENABLED"=1
+        "D3D12_HEAP_SERIALIZATION_ENABLED"=1
+        "D3D12_MAP_HEAP_ALLOCATIONS"=1
+        "D3D12_RESIDENCY_MANAGEMENT_ENABLED"=1
+    }
+
+    # Check if the registry key exists, if not, create it
+    if (-not (Test-Path $regKey)) {
+        New-Item -Path $regKey -Force | Out-Null
     }
 
     # Check for administrative privileges
@@ -147,7 +152,6 @@ function DirectX-Tweak {
     }
 
     Write-Host "DirectX Tweak - Applying registry modifications..." -ForegroundColor Yellow
-    $failedItems = @()
     foreach ($value in $regValues.GetEnumerator()) {
         $name = $value.Key
         $data = $value.Value
@@ -156,19 +160,12 @@ function DirectX-Tweak {
             Write-Host "Registry value modified: $name" -ForegroundColor Green
         } catch {
             Write-Host "Failed to modify registry value: $name" -ForegroundColor Red
-            $failedItems += $name
             Add-Content -Path $global:logFile -Value "Failed to modify registry value: $name - $($_.Exception.Message)"
         }
     }
-    if ($failedItems.Count -eq 0) {
-        Write-Host "DirectX Tweak - Registry modifications complete." -ForegroundColor Green
-    } else {
-        Write-Host "Failed to modify the following registry values:" -ForegroundColor Red
-        foreach ($item in $failedItems) {
-            Write-Host $item -ForegroundColor Red
-        }
-    }
+    Write-Host "DirectX Tweak - Registry modifications complete." -ForegroundColor Green
 }
+
 
 function Show-MainMenu {
     Write-Host " Boost:"
