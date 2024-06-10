@@ -70,6 +70,24 @@ function Run-IDM {
     Write-Host "IDM cleanup script executed." -ForegroundColor Green
 }
 
+function Install-MB {
+    $url = "https://downloads.malwarebytes.com/file/mb-windows"
+    $output = "mb-windows.exe"
+
+    # Download the installer
+    Write-Host "Downloading Malwarebytes installer..."
+    Invoke-WebRequest -Uri $url -OutFile $output
+
+    # Check if the download was successful
+    if (Test-Path $output) {
+        Write-Host "Download completed. Installing Malwarebytes..."
+        Start-Process -FilePath $output -Wait
+        Write-Host "Installation complete."
+    } else {
+        Write-Host "Failed to download Malwarebytes installer."
+    }
+}
+
 function Activate-Windows {
     $scriptUrl = "https://get.activated.win"
     $command = "irm $scriptUrl | iex"
@@ -84,22 +102,40 @@ function Activate-Office {
     Write-Host "Office activation script executed." -ForegroundColor Green
 }
 
-function Show-Menu {
+function Show-SubMenu {
     param (
-        [string]$Title = 'Cleanup Menu'
+        [string]$Title = 'Clear Cache Menu'
     )
 
     Write-Host " -------------------------"
     Write-Host " |     $Title     |"
     Write-Host " -------------------------"
     Write-Host " 1. Clean All (Recommended)"
-    Write-Host " 2. Clearing temporary files"
-    Write-Host " 3. Clearing browser history and cache"
-    Write-Host " 4. Clearing Recycle Bin"
-    Write-Host " 5. Install IDM"
-    Write-Host " 6. Activate Windows"
-    Write-Host " 7. Activate Office"
-    Write-Host " 8. Exit"
+    Write-Host " 2. Clear temporary files"
+    Write-Host " 3. Clear browser history and cache"
+    Write-Host " 4. Clear Recycle Bin"
+    Write-Host " 5. Back to Main Menu"
+    Write-Host
+}
+
+function Show-MainMenu {
+    param (
+        [string]$Title = 'Main Menu'
+    )
+
+    Write-Host " ========================="
+    Write-Host " |     $Title     |"
+    Write-Host " ========================="
+    Write-Host " Boost:"
+    Write-Host " 1. Clean All (Recommended)"
+    Write-Host " Security:"
+    Write-Host " 2. Install Malwarebytes"
+    Write-Host " Internet:"
+    Write-Host " 3. Install IDM"
+    Write-Host " Microsoft:"
+    Write-Host " 4. Install / Activate Windows"
+    Write-Host " 5. Install / Activate Office"
+    Write-Host " 6. Exit"
     Write-Host
 }
 
@@ -110,10 +146,10 @@ function Check-LogFile {
 }
 
 do {
-    Show-Menu
-    $choice = Read-Host 'Enter your choice'
+    Show-MainMenu
+    $mainChoice = Read-Host 'Enter your choice'
 
-    switch ($choice) {
+    switch ($mainChoice) {
         1 {
             Clear-TempFiles
             Clear-BrowserCache
@@ -122,34 +158,22 @@ do {
             Check-LogFile
         }
         2 {
-            Clear-TempFiles
-            Write-Host "Temporary files - Done Cleaning" -ForegroundColor Green
-            Check-LogFile
+            Install-MB
         }
         3 {
-            Clear-BrowserCache
-            Write-Host "Browser cache - Done Cleaning" -ForegroundColor Green
-            Check-LogFile
-        }
-        4 {
-            Clear-RecycleBin
-            Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
-            Check-LogFile
-        }
-        5 {
             Run-IDM
         }
-        6 {
+        4 {
             Activate-Windows
         }
-        7 {
+        5 {
             Activate-Office
         }
-        8 {
+        6 {
             Write-Host "Exiting..."
         }
         default {
             Write-Host "Invalid choice. Please try again."
         }
     }
-} while ($choice -ne 8)
+} while ($mainChoice -ne 6)
