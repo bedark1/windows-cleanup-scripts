@@ -147,6 +147,7 @@ function DirectX-Tweak {
     }
 
     Write-Host "DirectX Tweak - Applying registry modifications..." -ForegroundColor Yellow
+    $failedItems = @()
     foreach ($value in $regValues.GetEnumerator()) {
         $name = $value.Key
         $data = $value.Value
@@ -155,25 +156,35 @@ function DirectX-Tweak {
             Write-Host "Registry value modified: $name" -ForegroundColor Green
         } catch {
             Write-Host "Failed to modify registry value: $name" -ForegroundColor Red
+            $failedItems += $name
             Add-Content -Path $global:logFile -Value "Failed to modify registry value: $name - $($_.Exception.Message)"
         }
     }
-    Write-Host "DirectX Tweak - Registry modifications complete." -ForegroundColor Green
+    if ($failedItems.Count -eq 0) {
+        Write-Host "DirectX Tweak - Registry modifications complete." -ForegroundColor Green
+    } else {
+        Write-Host "Failed to modify the following registry values:" -ForegroundColor Red
+        foreach ($item in $failedItems) {
+            Write-Host $item -ForegroundColor Red
+        }
+    }
 }
 
-
 function Show-MainMenu {
-    Write-Host " ========================="
-    Write-Host " |       Main Menu       |"
-    Write-Host " ========================="
+    Write-Host " Boost:"
     Write-Host " 1. Clear Cache"
-    Write-Host " 2. Intelligent Standby List Cleaner (ISLC)"
+    Write-Host " 2. Intelligent standby list cleaner (ISLC)"
+    Write-Host " DirectX:"
     Write-Host " 3. DirectX Tweak"
+    Write-Host " Security:"
     Write-Host " 4. Install Malwarebytes"
+    Write-Host " Internet:"
     Write-Host " 5. Install IDM"
+    Write-Host " Microsoft:"
     Write-Host " 6. Install / Activate Windows"
     Write-Host " 7. Install / Activate Office"
     Write-Host " 8. Exit"
+    Write-Host
 }
 
 # Main script loop
