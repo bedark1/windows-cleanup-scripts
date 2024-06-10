@@ -186,9 +186,9 @@ function Show-MainMenu {
     Write-Host " Microsoft:" -ForegroundColor Blue
     Write-Host " 6. Install / Activate Windows"
     Write-Host " 7. Install / Activate Office"
-    Write-Host "`n"  # Add a blank line here
-    Write-Host " 8. Exit`n" -ForegroundColor Red
+    Write-Host "`n 8. Exit`n" -ForegroundColor Red
 }
+
 
 # Main script loop
 do {
