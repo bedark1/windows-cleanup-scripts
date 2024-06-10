@@ -177,23 +177,23 @@ $ResetFormat = "`e[0m"  # Reset formatting
 
 function Show-MainMenu {
     # Display the title
-    Write-Host -ForegroundColor Blue "`n$BoldText Welcome To the All Included Script`nby h4n1 - bdark$ResetFormat`n"
+    Write-Host -ForegroundColor Blue -NoNewline "`nWelcome To the All Included Script`nby h4n1 - bdark`n"
 
     # Display the menu options
-    Write-Host -ForegroundColor Yellow "$BoldText Enter your choice:$ResetFormat`n"
-    Write-Host " Boost:"
+    Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
+    Write-Host " Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
     Write-Host " 2. Intelligent standby list cleaner (ISLC)"
-    Write-Host " DirectX:"
+    Write-Host " DirectX:" -ForegroundColor Blue
     Write-Host " 3. DirectX Tweak"
-    Write-Host " Security:"
+    Write-Host " Security:" -ForegroundColor Blue
     Write-Host " 4. Install Malwarebytes"
-    Write-Host " Internet:"
+    Write-Host " Internet:" -ForegroundColor Blue
     Write-Host " 5. Install IDM"
-    Write-Host " Microsoft:"
+    Write-Host " Microsoft:" -ForegroundColor Blue
     Write-Host " 6. Install / Activate Windows"
     Write-Host " 7. Install / Activate Office"
-    Write-Host " 8. Exit`n"
+    Write-Host " 8. Exit`n" -ForegroundColor Red
 }
 
 # Main script loop
@@ -213,4 +213,3 @@ do {
         default { Write-Host "Invalid choice. Please try again." }
     }
 } while ($choice -ne 8)
-
