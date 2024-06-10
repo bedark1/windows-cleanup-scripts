@@ -88,6 +88,24 @@ function Install-MB {
     }
 }
 
+function Install-ISLC {
+    $url = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
+    $output = "ISLC.exe"
+
+    # Download the installer
+    Write-Host "Downloading Intelligent Standby List Cleaner (ISLC) installer..."
+    Invoke-WebRequest -Uri $url -OutFile $output
+
+    # Check if the download was successful
+    if (Test-Path $output) {
+        Write-Host "Download completed. Running ISLC..."
+        Start-Process -FilePath $output -Wait
+        Write-Host "ISLC execution complete."
+    } else {
+        Write-Host "Failed to download ISLC installer."
+    }
+}
+
 function Activate-Windows {
     $scriptUrl = "https://get.activated.win"
     $command = "irm $scriptUrl | iex"
@@ -128,14 +146,15 @@ function Show-MainMenu {
     Write-Host " ========================="
     Write-Host " Boost:"
     Write-Host " 1. Clear Cache"
+    Write-Host " 2. Intelligent standby list cleaner (ISLC)"
     Write-Host " Security:"
-    Write-Host " 2. Install Malwarebytes"
+    Write-Host " 3. Install Malwarebytes"
     Write-Host " Internet:"
-    Write-Host " 3. Install IDM"
+    Write-Host " 4. Install IDM"
     Write-Host " Microsoft:"
-    Write-Host " 4. Install / Activate Windows"
-    Write-Host " 5. Install / Activate Office"
-    Write-Host " 6. Exit"
+    Write-Host " 5. Install / Activate Windows"
+    Write-Host " 6. Install / Activate Office"
+    Write-Host " 7. Exit"
     Write-Host
 }
 
@@ -188,22 +207,25 @@ do {
             } while ($subChoice -ne 5)
         }
         2 {
-            Install-MB
+            Install-ISLC
         }
         3 {
-            Run-IDM
+            Install-MB
         }
         4 {
-            Activate-Windows
+            Run-IDM
         }
         5 {
-            Activate-Office
+            Activate-Windows
         }
         6 {
+            Activate-Office
+        }
+        7 {
             Write-Host "Exiting..."
         }
         default {
             Write-Host "Invalid choice. Please try again."
         }
     }
-} while ($mainChoice -ne 6)
+} while ($mainChoice -ne 7)
