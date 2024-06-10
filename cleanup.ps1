@@ -176,18 +176,19 @@ function Show-MainMenu {
     Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
     Write-Host " Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
-    Write-Host " 2. Intelligent standby list cleaner (ISLC)"
+    Write-Host " 2. Intelligent standby list cleaner (ISLC)`n"
     Write-Host " DirectX:" -ForegroundColor Blue
-    Write-Host " 3. DirectX Tweak"
+    Write-Host " 3. DirectX Tweak`n"
     Write-Host " Security:" -ForegroundColor Blue
-    Write-Host " 4. Install Malwarebytes"
+    Write-Host " 4. Install Malwarebytes`n"
     Write-Host " Internet:" -ForegroundColor Blue
-    Write-Host " 5. Install IDM"
+    Write-Host " 5. Install IDM`n"
     Write-Host " Microsoft:" -ForegroundColor Blue
-    Write-Host " 6. Install / Activate Windows"
+    Write-Host " 6. Install / Activate Windows`n"
     Write-Host " 7. Install / Activate Office`n"
     Write-Host " 8. Exit`n" -ForegroundColor Red
 }
+
 
 
 
