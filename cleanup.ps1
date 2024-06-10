@@ -151,11 +151,41 @@ do {
 
     switch ($mainChoice) {
         1 {
-            Clear-TempFiles
-            Clear-BrowserCache
-            Clear-RecycleBin
-            Write-Host "All selected tasks - Done Cleaning" -ForegroundColor Green
-            Check-LogFile
+            do {
+                Show-SubMenu -Title "Clear Cache Menu"
+                $subChoice = Read-Host 'Enter your choice'
+                switch ($subChoice) {
+                    1 {
+                        Clear-TempFiles
+                        Clear-BrowserCache
+                        Clear-RecycleBin
+                        Write-Host "All selected tasks - Done Cleaning" -ForegroundColor Green
+                        Check-LogFile
+                        break
+                    }
+                    2 {
+                        Clear-TempFiles
+                        Write-Host "Temporary files - Done Cleaning" -ForegroundColor Green
+                        Check-LogFile
+                    }
+                    3 {
+                        Clear-BrowserCache
+                        Write-Host "Browser cache - Done Cleaning" -ForegroundColor Green
+                        Check-LogFile
+                    }
+                    4 {
+                        Clear-RecycleBin
+                        Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
+                        Check-LogFile
+                    }
+                    5 {
+                        break
+                    }
+                    default {
+                        Write-Host "Invalid choice. Please try again."
+                    }
+                }
+            } while ($subChoice -ne 5)
         }
         2 {
             Install-MB
