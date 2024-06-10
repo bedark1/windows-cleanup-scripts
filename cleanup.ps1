@@ -170,12 +170,13 @@ function DirectX-Tweak {
 
 function Show-MainMenu {
     # Display the title
-    Write-Host "`nWelcome To the All Included Script`nby h4n1 - bdark" -ForegroundColor Blue -BackgroundColor Black -NoNewline
-    Write-Host "`n"
+    Write-Host "`nWelcome To the All Included Script`nby h4n1 - bdark" -ForegroundColor Blue -BackgroundColor Black
+    Write-Host
+
+    # Display the prompt
+    Write-Host "Enter your choice:" -ForegroundColor Yellow
 
     # Display the menu options
-    Write-Host -NoNewline "Enter your choice: " -ForegroundColor Yellow
-
     Write-Host "`n Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
     Write-Host " 2. Intelligent standby list cleaner (ISLC)"
@@ -212,4 +213,5 @@ do {
         default { Write-Host "Invalid choice. Please try again." }
     }
 } while ($choice -ne 8)
+
 
