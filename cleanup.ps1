@@ -1,5 +1,30 @@
-# Define a global log file path
 $global:logFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "CleanupLog.txt")
+
+function Is-Administrator {
+    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Restart-AsAdmin {
+    $scriptPath = $MyInvocation.MyCommand.Path
+    Start-Process powershell -ArgumentList "-NoExit -File `"$scriptPath`"" -Verb RunAs
+    exit
+}
+
+function Prompt-AdminPrivileges {
+    Write-Host "You ran the script with no admin privileges." -ForegroundColor Red
+    $choice = Read-Host "Choose an option: 1. Exit 2. Re-run with admin privileges"
+    switch ($choice) {
+        1 { Write-Host "Exiting..."; exit }
+        2 { Restart-AsAdmin }
+        default { Write-Host "Invalid choice. Exiting..."; exit }
+    }
+}
+
+if (-not (Is-Administrator)) {
+    Prompt-AdminPrivileges
+}
 
 function Clear-TempFiles {
     $tempPaths = @(
@@ -74,11 +99,9 @@ function Install-MB {
     $url = "https://downloads.malwarebytes.com/file/mb-windows"
     $output = "mb-windows.exe"
 
-    # Download the installer
     Write-Host "Downloading Malwarebytes installer..."
     Invoke-WebRequest -Uri $url -OutFile $output
 
-    # Check if the download was successful
     if (Test-Path $output) {
         Write-Host "Download completed. Installing Malwarebytes..."
         Start-Process -FilePath $output -Wait
@@ -92,11 +115,9 @@ function Install-ISLC {
     $url = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
     $output = "ISLC.exe"
 
-    # Download the installer
     Write-Host "Downloading Intelligent Standby List Cleaner (ISLC) installer..."
     Invoke-WebRequest -Uri $url -OutFile $output
 
-    # Check if the download was successful
     if (Test-Path $output) {
         Write-Host "Download completed. Running ISLC..."
         Start-Process -FilePath $output -Wait
@@ -124,7 +145,6 @@ function DirectX-Tweak {
     Write-Host "DirectX Tweak - Applying registry modifications..."
     $registryPath = "HKLM:\SOFTWARE\Microsoft\DirectX"
 
-    # List of registry values to modify
     $registryValues = @{
         "D3D11_ALLOW_TILING" = 1
         "D3D12_CPU_PAGE_TABLE_ENABLED" = 1
@@ -142,7 +162,6 @@ function DirectX-Tweak {
         "D3D12_DEFERRED_CONTEXTS" = 1
     }
 
-    # Modify existing or create missing registry values
     foreach ($valueName in $registryValues.Keys) {
         if (-not (Test-Path "$registryPath\$valueName")) {
             try {
@@ -166,13 +185,8 @@ function DirectX-Tweak {
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
 
-
-
 function Show-MainMenu {
-    # Display the title
     Write-Host -ForegroundColor Blue -NoNewline "`nWelcome To the All Included Script`nby h4n1 - bdark`n"
-
-    # Display the menu options
     Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
     Write-Host " Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
@@ -189,12 +203,6 @@ function Show-MainMenu {
     Write-Host " 8. Exit`n" -ForegroundColor Red
 }
 
-
-
-
-
-
-# Main script loop
 do {
     Show-MainMenu
     $choice = Read-Host "Enter your choice"
@@ -211,6 +219,3 @@ do {
         default { Write-Host "Invalid choice. Please try again." }
     }
 } while ($choice -ne 8)
-
-
-
