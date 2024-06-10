@@ -147,26 +147,25 @@ function DirectX-Tweak {
         New-Item -Path $registryPath -Force | Out-Null
     }
 
-    # Add missing registry values
+    # Modify existing or create missing registry values
     foreach ($valueName in $registryValues.Keys) {
-        if (-not (Test-Path "$registryPath\$valueName")) {
+        if (!(Test-Path "$registryPath\$valueName")) {
             New-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -PropertyType DWORD | Out-Null
-        }
-    }
-
-    # Modify existing registry values
-    foreach ($valueName in $registryValues.Keys) {
-        try {
-            Set-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -ErrorAction Stop
-            Write-Host "Modified registry value: $valueName"
-        } catch {
-            Write-Host "Failed to modify registry value: $valueName"
-            Write-Host "Error: $_"
+            Write-Host "Created registry value: $valueName"
+        } else {
+            try {
+                Set-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -ErrorAction Stop
+                Write-Host "Modified registry value: $valueName"
+            } catch {
+                Write-Host "Failed to modify registry value: $valueName"
+                Write-Host "Error: $_"
+            }
         }
     }
 
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
+
 
 
 
