@@ -120,7 +120,7 @@ function Activate-Office {
     Write-Host "Office activation script executed." -ForegroundColor Green
 }
 
-function DirectXTweak {
+function DirectX-Tweak {
     Write-Host "DirectX Tweak - Applying registry modifications..."
     $registryPath = "HKLM:\SOFTWARE\Microsoft\DirectX"
 
@@ -144,7 +144,7 @@ function DirectXTweak {
 
     # Check if registry key exists, if not, create it
     if (!(Test-Path $registryPath)) {
-        New-Item -Path $registryPath -ItemType Directory | Out-Null
+        New-Item -Path $registryPath -Force | Out-Null
     }
 
     # Add missing registry values
@@ -167,7 +167,6 @@ function DirectXTweak {
 
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
-
 
 
 
