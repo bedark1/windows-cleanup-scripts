@@ -170,29 +170,23 @@ function DirectX-Tweak {
 
 function Show-MainMenu {
     # Display the title
-    Write-Host "`nWelcome To the All Included Script`nby h4n1 - bdark" -ForegroundColor Blue -BackgroundColor Black
-    Write-Host
-
-    # Display the prompt
-    Write-Host "Enter your choice:" -ForegroundColor Yellow
+    Write-Host -ForegroundColor Blue -NoNewline "`nWelcome To the All Included Script`nby h4n1 - bdark`n"
 
     # Display the menu options
-    Write-Host "`n Boost:" -ForegroundColor Blue
+    Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
+    Write-Host " Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
     Write-Host " 2. Intelligent standby list cleaner (ISLC)"
-
-    Write-Host "`n DirectX:" -ForegroundColor Blue
+    Write-Host " DirectX:" -ForegroundColor Blue
     Write-Host " 3. DirectX Tweak"
-
-    Write-Host "`n Security:" -ForegroundColor Blue
+    Write-Host " Security:" -ForegroundColor Blue
     Write-Host " 4. Install Malwarebytes"
-
-    Write-Host "`n Internet:" -ForegroundColor Blue
+    Write-Host " Internet:" -ForegroundColor Blue
     Write-Host " 5. Install IDM"
-
-    Write-Host "`n Microsoft:" -ForegroundColor Blue
+    Write-Host " Microsoft:" -ForegroundColor Blue
     Write-Host " 6. Install / Activate Windows"
     Write-Host " 7. Install / Activate Office"
+    Write-Host "`n"  # Add a blank line here
     Write-Host " 8. Exit`n" -ForegroundColor Red
 }
 
@@ -213,5 +207,6 @@ do {
         default { Write-Host "Invalid choice. Please try again." }
     }
 } while ($choice -ne 8)
+
 
 
