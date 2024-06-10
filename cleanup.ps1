@@ -169,10 +169,18 @@ function DirectX-Tweak {
 
 
 
-
-
+# Define ANSI escape codes for colors and formatting
+$BlueColor = "`e[34m"   # Blue color
+$BoldText = "`e[1m"     # Bold text
+$YellowColor = "`e[33m" # Yellow color
+$ResetFormat = "`e[0m"  # Reset formatting
 
 function Show-MainMenu {
+    # Display the title
+    Write-Host -ForegroundColor Blue "`n$BoldText Welcome To the All Included Script`nby h4n1 - bdark$ResetFormat`n"
+
+    # Display the menu options
+    Write-Host -ForegroundColor Yellow "$BoldText Enter your choice:$ResetFormat`n"
     Write-Host " Boost:"
     Write-Host " 1. Clear Cache"
     Write-Host " 2. Intelligent standby list cleaner (ISLC)"
@@ -185,8 +193,7 @@ function Show-MainMenu {
     Write-Host " Microsoft:"
     Write-Host " 6. Install / Activate Windows"
     Write-Host " 7. Install / Activate Office"
-    Write-Host " 8. Exit"
-    Write-Host
+    Write-Host " 8. Exit`n"
 }
 
 # Main script loop
@@ -206,3 +213,4 @@ do {
         default { Write-Host "Invalid choice. Please try again." }
     }
 } while ($choice -ne 8)
+
