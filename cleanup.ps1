@@ -184,10 +184,11 @@ function Show-MainMenu {
     Write-Host " Internet:" -ForegroundColor Blue
     Write-Host " 5. Install IDM`n"
     Write-Host " Microsoft:" -ForegroundColor Blue
-    Write-Host " 6. Install / Activate Windows`n"
+    Write-Host " 6. Install / Activate Windows"
     Write-Host " 7. Install / Activate Office`n"
     Write-Host " 8. Exit`n" -ForegroundColor Red
 }
+
 
 
 
