@@ -142,29 +142,20 @@ function DirectX-Tweak {
         "D3D12_DEFERRED_CONTEXTS" = 1
     }
 
-    # Check if registry key exists, if not, create it
-    if (!(Test-Path $registryPath)) {
-        New-Item -Path $registryPath -Force | Out-Null
-    }
-
     # Modify existing or create missing registry values
     foreach ($valueName in $registryValues.Keys) {
-        if (!(Test-Path "$registryPath\$valueName")) {
-            New-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -PropertyType DWORD | Out-Null
-            Write-Host "Created registry value: $valueName"
-        } else {
-            try {
-                Set-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -ErrorAction Stop
-                Write-Host "Modified registry value: $valueName"
-            } catch {
-                Write-Host "Failed to modify registry value: $valueName"
-                Write-Host "Error: $_"
-            }
+        try {
+            Set-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -ErrorAction Stop
+            Write-Host "Modified registry value: $valueName"
+        } catch {
+            Write-Host "Failed to modify registry value: $valueName"
+            Write-Host "Error: $_"
         }
     }
 
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
+
 
 
 
