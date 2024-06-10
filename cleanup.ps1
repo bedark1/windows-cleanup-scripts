@@ -5,9 +5,8 @@ function Is-Administrator {
 }
 
 function Restart-AsAdmin {
-    $command = "irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex"
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
-    exit
+    $command = "Start-Process PowerShell -ArgumentList '-NoExit', '-Command', 'irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex' -Verb RunAs"
+    Invoke-Expression $command
 }
 
 function Prompt-AdminPrivileges {
@@ -15,7 +14,13 @@ function Prompt-AdminPrivileges {
     $choice = Read-Host "Choose an option: 1. Exit 2. Re-run with admin privileges"
     switch ($choice) {
         1 { Write-Host "Exiting..."; exit }
-        2 { Restart-AsAdmin }
+        2 {
+            Write-Host "Re-running the script with admin privileges..."
+            Restart-AsAdmin
+            Write-Host "A new PowerShell window has been opened with administrative privileges."
+            Write-Host "If the new window closed immediately, please check if you have administrative rights."
+            exit
+        }
         default { Write-Host "Invalid choice. Exiting..."; exit }
     }
 }
@@ -198,7 +203,7 @@ function Show-MainMenu {
     Write-Host " Microsoft:" -ForegroundColor Blue
     Write-Host " 6. Install / Activate Windows"
     Write-Host " 7. Install / Activate Office`n"
-    Write-Host " 8. Exit`n" -ForegroundColor Red
+    Write-Host " 8. Exit`n"
 }
 
 do {
