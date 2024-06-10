@@ -120,7 +120,7 @@ function Activate-Office {
     Write-Host "Office activation script executed." -ForegroundColor Green
 }
 
-ffunction DirectXTweak {
+function DirectXTweak {
     Write-Host "DirectX Tweak - Applying registry modifications..."
     $registryPath = "HKLM:\SOFTWARE\Microsoft\DirectX"
 
@@ -167,6 +167,7 @@ ffunction DirectXTweak {
 
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
+
 
 
 
