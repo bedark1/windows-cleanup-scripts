@@ -149,6 +149,12 @@ function DirectX-Tweak {
     Write-Host "DirectX Tweak - Applying registry modifications..." -ForegroundColor Yellow
     Write-Host "Registry Key: $regKey"
     
+    # Check if the registry key exists, and create it if it doesn't
+    if (-not (Test-Path $regKey)) {
+        Write-Host "Registry key does not exist. Creating it..."
+        New-Item -Path $regKey -Force | Out-Null
+    }
+
     foreach ($value in $regValues.GetEnumerator()) {
         $name = $value.Key
         $data = $value.Value
@@ -164,6 +170,7 @@ function DirectX-Tweak {
     }
     Write-Host "DirectX Tweak - Registry modifications complete." -ForegroundColor Green
 }
+
 
 
 
