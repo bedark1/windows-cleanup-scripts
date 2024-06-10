@@ -120,112 +120,76 @@ function Activate-Office {
     Write-Host "Office activation script executed." -ForegroundColor Green
 }
 
-function Show-SubMenu {
-    param (
-        [string]$Title = 'Clear Cache Menu'
+function DirectX-Tweak {
+    # Define the registry keys and values for DirectX tweak
+    $regKey = "HKLM\SOFTWARE\Microsoft\DirectX"
+    $regValues = @(
+        "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE"=dword:00000001,
+        "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS"=dword:00000001,
+        "D3D12_RESOURCE_ALIGNMENT"=dword:00000001,
+        "D3D11_MULTITHREADED"=dword:00000001,
+        "D3D12_MULTITHREADED"=dword:00000001,
+        "D3D11_DEFERRED_CONTEXTS"=dword:00000001,
+        "D3D12_DEFERRED_CONTEXTS"=dword:00000001,
+        "D3D11_ALLOW_TILING"=dword:00000001,
+        "D3D11_ENABLE_DYNAMIC_CODEGEN"=dword:00000001,
+        "D3D12_ALLOW_TILING"=dword:00000001,
+        "D3D12_CPU_PAGE_TABLE_ENABLED"=dword:00000001,
+        "D3D12_HEAP_SERIALIZATION_ENABLED"=dword:00000001,
+        "D3D12_MAP_HEAP_ALLOCATIONS"=dword:00000001,
+        "D3D12_RESIDENCY_MANAGEMENT_ENABLED"=dword:00000001
     )
 
-    Write-Host " -------------------------"
-    Write-Host " |     $Title     |"
-    Write-Host " -------------------------"
-    Write-Host " 1. Clear Cache (Recommended)"
-    Write-Host " 2. Clear temporary files"
-    Write-Host " 3. Clear browser history and cache"
-    Write-Host " 4. Clear Recycle Bin"
-    Write-Host " 5. Back to Main Menu"
-    Write-Host
+    # Check for administrative privileges
+    if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+        Write-Host "You must have administrator rights to perform this action." -ForegroundColor Red
+        return
+    }
+
+    Write-Host "DirectX Tweak - Applying registry modifications..." -ForegroundColor Yellow
+    foreach ($value in $regValues.GetEnumerator()) {
+        $name = $value.Key
+        $data = $value.Value
+        try {
+            Set-ItemProperty -Path $regKey -Name $name -Value $data -ErrorAction Stop
+            Write-Host "Registry value modified: $name" -ForegroundColor Green
+        } catch {
+            Write-Host "Failed to modify registry value: $name" -ForegroundColor Red
+            Add-Content -Path $global:logFile -Value "Failed to modify registry value: $name - $($_.Exception.Message)"
+        }
+    }
+    Write-Host "DirectX Tweak - Registry modifications complete." -ForegroundColor Green
 }
 
 function Show-MainMenu {
-    param (
-        [string]$Title = 'Main Menu'
-    )
-
     Write-Host " ========================="
-    Write-Host " |     $Title     |"
+    Write-Host " |       Main Menu       |"
     Write-Host " ========================="
-    Write-Host " Boost:"
     Write-Host " 1. Clear Cache"
-    Write-Host " 2. Intelligent standby list cleaner (ISLC)"
-    Write-Host " Security:"
-    Write-Host " 3. Install Malwarebytes"
-    Write-Host " Internet:"
-    Write-Host " 4. Install IDM"
-    Write-Host " Microsoft:"
-    Write-Host " 5. Install / Activate Windows"
-    Write-Host " 6. Install / Activate Office"
-    Write-Host " 7. Exit"
-    Write-Host
+    Write-Host " 2. Intelligent Standby List Cleaner (ISLC)"
+    Write-Host " 3. DirectX Tweak"
+    Write-Host " 4. Install Malwarebytes"
+    Write-Host " 5. Install IDM"
+    Write-Host " 6. Install / Activate Windows"
+    Write-Host " 7. Install / Activate Office"
+    Write-Host " 8. Exit"
 }
 
-function Check-LogFile {
-    if (Test-Path -Path $global:logFile) {
-        Write-Host "Log file has been generated at your desktop with the files that couldn't be deleted." -ForegroundColor Red
-    }
-}
-
+# Main script loop
 do {
     Show-MainMenu
-    $mainChoice = Read-Host 'Enter your choice'
+    $choice = Read-Host "Enter your choice"
 
-    switch ($mainChoice) {
-        1 {
-            do {
-                Show-SubMenu -Title "Clear Cache Menu"
-                $subChoice = Read-Host 'Enter your choice'
-                switch ($subChoice) {
-                    1 {
-                        Clear-TempFiles
-                        Clear-BrowserCache
-                        Clear-RecycleBin
-                        Write-Host "All selected tasks - Done Cleaning" -ForegroundColor Green
-                        Check-LogFile
-                        break
-                    }
-                    2 {
-                        Clear-TempFiles
-                        Write-Host "Temporary files - Done Cleaning" -ForegroundColor Green
-                        Check-LogFile
-                    }
-                    3 {
-                        Clear-BrowserCache
-                        Write-Host "Browser cache - Done Cleaning" -ForegroundColor Green
-                        Check-LogFile
-                    }
-                    4 {
-                        Clear-RecycleBin
-                        Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
-                        Check-LogFile
-                    }
-                    5 {
-                        break
-                    }
-                    default {
-                        Write-Host "Invalid choice. Please try again."
-                    }
-                }
-            } while ($subChoice -ne 5)
-        }
-        2 {
-            Install-ISLC
-        }
-        3 {
-            Install-MB
-        }
-        4 {
-            Run-IDM
-        }
-        5 {
-            Activate-Windows
-        }
-        6 {
-            Activate-Office
-        }
-        7 {
-            Write-Host "Exiting..."
-        }
-        default {
-            Write-Host "Invalid choice. Please try again."
-        }
+    switch ($choice) {
+        1 { Clear-TempFiles; Clear-BrowserCache; Clear-RecycleBin }
+        2 { Install-ISLC }
+        3 { DirectX-Tweak }
+        4 { Install-MB }
+        5 { Run-IDM }
+        6 { Activate-Windows }
+        7 { Activate-Office }
+        8 { Write-Host "Exiting..."; break }
+        default { Write-Host "Invalid choice. Please try again." }
     }
-} while ($mainChoice -ne 7)
+} while ($choice -ne 8)
+
