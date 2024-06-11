@@ -428,6 +428,7 @@ function Optimize-Performance {
         }
     } while ($optChoice -ne 10)
 }
+
 function Show-OptimizeMenu {
     Write-Host "`nOptimize Windows Performance:`" -ForegroundColor Yellow
     Write-Host "1. Optimize Windows Performance (All)"
@@ -441,6 +442,7 @@ function Show-OptimizeMenu {
     Write-Host "9. Revert All Changes"
     Write-Host "10. Back to Main Menu`n"
 }
+
 function Optimize-Performance {
     do {
         Show-OptimizeMenu
