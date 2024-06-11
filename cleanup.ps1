@@ -28,6 +28,7 @@ function Prompt-AdminPrivileges {
 if (-not (Is-Administrator)) {
     Prompt-AdminPrivileges
 }
+
 function Clear-TempFiles {
     $tempPaths = @(
         "$env:windir\Temp\*",
