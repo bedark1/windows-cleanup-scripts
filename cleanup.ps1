@@ -121,21 +121,47 @@ function Install-MB { # Added hyphen
     }
 }
 
-function Install-ISLC { # Add the hyphens here!
+function Install-ISLC {
+    param(
+        [string]$ArchivePath,
+        [string]$DestinationPath
+    )
+
     $url = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
-    $output = "ISLC.exe"
+    $archivePath = Join-Path $env:TEMP "ISLC.exe" # Save to temp folder
+    $desktopPath = [Environment]::GetFolderPath("Desktop")
 
     Write-Host "Downloading Intelligent Standby List Cleaner (ISLC) installer..."
-    Invoke-WebRequest -Uri $url -OutFile $output
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $archivePath -ErrorAction Stop
+    } catch {
+        Write-Host "Failed to download ISLC installer: $($_.Exception.Message)" -ForegroundColor Red
+        return
+    }
 
-    if (Test-Path $output) {
-        Write-Host "Download completed. Running ISLC..."
-        Start-Process -FilePath $output -Wait
-        Write-Host "ISLC execution complete."
-    } else {
-        Write-Host "Failed to download ISLC installer."
+    # Download 7z.exe (if not already present)
+    $7zExePath = Join-Path $PSScriptRoot "7z.exe"
+    if (!(Test-Path $7zExePath)) {
+        Write-Host "Downloading 7z.exe..."
+        $7zUrl = "https://www.7-zip.org/a/7zr.exe"
+        try {
+            Invoke-WebRequest -Uri $7zUrl -OutFile $7zExePath -ErrorAction Stop
+        } catch {
+            Write-Host "Failed to download 7z.exe: $($_.Exception.Message)" -ForegroundColor Red
+            return
+        }
+    }
+
+    # Extract to the desktop
+    try {
+        Extract-7Zip -ArchivePath $archivePath -DestinationPath $desktopPath -ErrorAction Stop
+        Write-Host "Intelligent Standby List Cleaner (ISLC) installed successfully on the desktop." -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to extract ISLC installer: $($_.Exception.Message)" -ForegroundColor Red
+        return
     }
 }
+
 
 
 function Activate-Windows {
