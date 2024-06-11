@@ -28,7 +28,6 @@ function Prompt-AdminPrivileges {
 if (-not (Is-Administrator)) {
     Prompt-AdminPrivileges
 }
-
 function Clear-TempFiles {
     $tempPaths = @(
         "$env:windir\Temp\*",
@@ -113,7 +112,6 @@ function Install-MB {
         Write-Host "Failed to download Malwarebytes installer."
     }
 }
-
 function Install-ISLC {
     $url = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
     $output = "ISLC.exe"
@@ -129,14 +127,12 @@ function Install-ISLC {
         Write-Host "Failed to download ISLC installer."
     }
 }
-
 function Activate-Windows {
     $scriptUrl = "https://get.activated.win"
     $command = "irm $scriptUrl | iex"
     Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
     Write-Host "Windows activation script executed." -ForegroundColor Green
 }
-
 function Activate-Office {
     $scriptUrl = "https://get.activated.win"
     $command = "irm $scriptUrl | iex"
@@ -187,9 +183,6 @@ function DirectX-Tweak {
 
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
-
-# --- Optimization Functions (with feedback) ---
-
 function Disable-PagingFile {
     try {
         Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys 0 0" -ErrorAction Stop
@@ -198,7 +191,6 @@ function Disable-PagingFile {
         Write-Host "Disable-PagingFile - Failed: $_" -ForegroundColor Red
     }
 }
-
 function Apply-RegistryTweaks {
     try {
         $regContent = @"
@@ -293,7 +285,6 @@ Windows Registry Editor Version 5.00
         Write-Host "Apply-RegistryTweaks - Failed: $_" -ForegroundColor Red
     }
 }
-
 function Disable-UnnecessaryServices {
     try {
         $services = @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")
@@ -327,7 +318,6 @@ function Disable-WindowsUpdates {
         Write-Host "Disable-WindowsUpdates - Failed: $_" -ForegroundColor Red
     }
 }
-
 function Remove-WindowsBloatware {
     try {
         $bloatwareApps = @(
@@ -378,7 +368,6 @@ function Disable-UnnecessaryStartupPrograms {
         Write-Host "Disable-UnnecessaryStartupPrograms - Failed: $_" -ForegroundColor Red
     }
 }
-
 function Revert-AllChanges {
     try {
         Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys" -ErrorAction Stop
@@ -393,7 +382,6 @@ function Revert-AllChanges {
         Write-Host "Revert-AllChanges - Failed: $_" -ForegroundColor Red
     }
 }
-
 
 function Optimize-Performance {
     do {
@@ -439,7 +427,6 @@ function Optimize-Performance {
         }
     } while ($optChoice -ne 10)
 }
-
 function Show-OptimizeMenu {
     Write-Host "`nOptimize Windows Performance:`" -ForegroundColor Yellow
     Write-Host "1. Optimize Windows Performance (All)"
@@ -452,6 +439,50 @@ function Show-OptimizeMenu {
     Write-Host "8. Disable Unnecessary Startup Programs"
     Write-Host "9. Revert All Changes"
     Write-Host "10. Back to Main Menu`n"
+}
+function Optimize-Performance {
+    do {
+        Show-OptimizeMenu
+        $optChoice = Read-Host "Enter your choice"
+
+        switch ($optChoice) {
+            1 { 
+                # Call each optimization function with feedback for "Optimize All"
+                Disable-PagingFile
+                Write-Host "Disable-PagingFile - Done" -ForegroundColor Green
+                
+                Apply-RegistryTweaks
+                Write-Host "Apply-RegistryTweaks - Done" -ForegroundColor Green
+
+                Disable-UnnecessaryServices 
+                Write-Host "Disable-UnnecessaryServices - Done" -ForegroundColor Green
+
+                Adjust-GraphicsAndMultimediaSettings
+                Write-Host "Adjust-GraphicsAndMultimediaSettings - Done" -ForegroundColor Green
+
+                Disable-WindowsUpdates 
+                Write-Host "Disable-WindowsUpdates - Done" -ForegroundColor Green
+
+                Remove-WindowsBloatware
+                Write-Host "Remove-WindowsBloatware - Done" -ForegroundColor Green
+
+                Disable-UnnecessaryStartupPrograms
+                Write-Host "Disable-UnnecessaryStartupPrograms - Done" -ForegroundColor Green 
+
+                break # Exit the switch statement after "Optimize All" 
+            }
+            2 { Disable-PagingFile } # No extra feedback for individual options
+            3 { Apply-RegistryTweaks }
+            4 { Disable-UnnecessaryServices }
+            5 { Adjust-GraphicsAndMultimediaSettings }
+            6 { Disable-WindowsUpdates }
+            7 { Remove-WindowsBloatware }
+            8 { Disable-UnnecessaryStartupPrograms }
+            9 { Revert-AllChanges }
+            10 { Write-Host "Returning to Main Menu..."; break } 
+            default { Write-Host "Invalid choice. Please try again." } # Closing quote added!
+        }
+    } while ($optChoice -ne 10)
 }
 
 
@@ -491,4 +522,7 @@ do {
         9 { Write-Host "Exiting..."; break }
         default { Write-Host "Invalid choice. Please try again." }
     }
-} while ($choice -ne 9) 
+} while ($choice -ne 9)
+
+
+
