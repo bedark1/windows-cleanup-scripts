@@ -454,6 +454,7 @@ function Show-OptimizeMenu {
     Write-Host "10. Back to Main Menu`n"
 }
 
+
 function Show-MainMenu {
     Write-Host -ForegroundColor Blue -NoNewline "`nWelcome To the All Included Script`nby h4n1 - bdark`n"
     Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
