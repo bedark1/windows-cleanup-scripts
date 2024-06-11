@@ -105,7 +105,7 @@ function RunIDM {
     Write-Host "IDM cleanup script executed." -ForegroundColor Green
 }
 
-function InstallMB {
+function Install-MB { # Added hyphen 
     $url = "https://downloads.malwarebytes.com/file/mb-windows"
     $output = "mb-windows.exe"
 
@@ -116,8 +116,7 @@ function InstallMB {
         Write-Host "Download completed. Installing Malwarebytes..."
         Start-Process -FilePath $output -Wait
         Write-Host "Installation complete."
-    }
-    else {
+    } else {
         Write-Host "Failed to download Malwarebytes installer."
     }
 }
