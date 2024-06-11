@@ -121,6 +121,8 @@ function Install-MB { # Added hyphen
     }
 }
 
+
+
 function Install-ISLC {
     $url = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
     $archivePath = Join-Path $env:TEMP "ISLC.exe" # Save to temp folder
@@ -134,20 +136,38 @@ function Install-ISLC {
         return
     }
 
-    # Download and extract 7z.exe to temp directory
-    $7zExePath = Join-Path $env:TEMP "7z.exe"
-    $7zUrl = "https://www.7-zip.org/a/7zr.exe"
-    try {
-        Invoke-WebRequest -Uri $7zUrl -OutFile $7zExePath -ErrorAction Stop
-    } catch {
-        Write-Host "Failed to download 7z.exe: $($_.Exception.Message)" -ForegroundColor Red
-        return
+    # Define Extract-7Zip function
+    function Extract-7Zip {
+        param(
+            [string]$ArchivePath,
+            [string]$DestinationPath
+        )
+
+        # Download 7z.exe (if not already present)
+        $7zExePath = Join-Path $env:TEMP "7z.exe"
+        $7zUrl = "https://www.7-zip.org/a/7zr.exe"
+        if (!(Test-Path $7zExePath)) {
+            try {
+                Invoke-WebRequest -Uri $7zUrl -OutFile $7zExePath -ErrorAction Stop
+            } catch {
+                Write-Host "Failed to download 7z.exe: $($_.Exception.Message)" -ForegroundColor Red
+                return
+            }
+        }
+
+        # Extract the archive
+        try {
+            Start-Process -FilePath $7zExePath -ArgumentList "x '$ArchivePath' -o'$DestinationPath' -y" -Wait -NoNewWindow -ErrorAction Stop
+        } catch {
+            Write-Host "Failed to extract archive: $($_.Exception.Message)" -ForegroundColor Red
+            return
+        }
     }
 
     # Extract ISLC to desktop
     Write-Host "Extracting ISLC installer..."
     try {
-        Start-Process -FilePath $7zExePath -ArgumentList "x '$archivePath' -o'$desktopPath' -y" -Wait -NoNewWindow -ErrorAction Stop
+        Extract-7Zip -ArchivePath $archivePath -DestinationPath $desktopPath
         Write-Host "Intelligent Standby List Cleaner (ISLC) extracted successfully on the desktop." -ForegroundColor Green
     } catch {
         Write-Host "Failed to extract ISLC installer: $($_.Exception.Message)" -ForegroundColor Red
@@ -168,6 +188,7 @@ function Install-ISLC {
         Write-Host "ISLC executable not found on the desktop." -ForegroundColor Red
     }
 }
+
 
 
 
