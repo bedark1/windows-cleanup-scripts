@@ -480,7 +480,7 @@ function InstallMB {
     }
 }
 
-function InstallISLC {
+function Install-ISLC { 
     $url = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
     $output = "ISLC.exe"
 
@@ -491,8 +491,7 @@ function InstallISLC {
         Write-Host "Download completed. Running ISLC..."
         Start-Process -FilePath $output -Wait
         Write-Host "ISLC execution complete."
-    }
-    else {
+    } else {
         Write-Host "Failed to download ISLC installer."
     }
 }
