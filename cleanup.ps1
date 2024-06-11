@@ -157,7 +157,7 @@ function Install-ISLC {
 
         # Extract the archive
         try {
-            Start-Process -FilePath $7zExePath -ArgumentList "x '$ArchivePath' -o'$DestinationPath' -y" -Wait -NoNewWindow -ErrorAction Stop
+            Start-Process -FilePath $7zExePath -ArgumentList "x `"$ArchivePath`" -o`"$DestinationPath`" -y" -Wait -NoNewWindow -ErrorAction Stop
         } catch {
             Write-Host "Failed to extract archive: $($_.Exception.Message)" -ForegroundColor Red
             return
@@ -175,7 +175,7 @@ function Install-ISLC {
     }
 
     # Run ISLC
-    $islcExePath = Join-Path $desktopPath "ISLC.exe"
+    $islcExePath = Join-Path $desktopPath "Intelligent Standby List Cleaner.exe"
     if (Test-Path $islcExePath) {
         Write-Host "Running ISLC..."
         try {
@@ -188,7 +188,6 @@ function Install-ISLC {
         Write-Host "ISLC executable not found on the desktop." -ForegroundColor Red
     }
 }
-
 
 
 
