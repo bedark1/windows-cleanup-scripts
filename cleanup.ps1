@@ -98,46 +98,6 @@ function Clear-RecycleBin {
 }
 
 
-function RunIDM {
-    $scriptUrl = "https://massgrave.dev/ias"
-    $command = "irm $scriptUrl | iex"
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
-    Write-Host "IDM cleanup script executed." -ForegroundColor Green
-}
-
-function InstallMB {
-    $url = "https://downloads.malwarebytes.com/file/mb-windows"
-    $output = "mb-windows.exe"
-
-    Write-Host "Downloading Malwarebytes installer..."
-    Invoke-WebRequest -Uri $url -OutFile $output
-
-    if (Test-Path $output) {
-        Write-Host "Download completed. Installing Malwarebytes..."
-        Start-Process -FilePath $output -Wait
-        Write-Host "Installation complete."
-    }
-    else {
-        Write-Host "Failed to download Malwarebytes installer."
-    }
-}
-
-function InstallISLC {
-    $url = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
-    $output = "ISLC.exe"
-
-    Write-Host "Downloading Intelligent Standby List Cleaner (ISLC) installer..."
-    Invoke-WebRequest -Uri $url -OutFile $output
-
-    if (Test-Path $output) {
-        Write-Host "Download completed. Running ISLC..."
-        Start-Process -FilePath $output -Wait
-        Write-Host "ISLC execution complete."
-    }
-    else {
-        Write-Host "Failed to download ISLC installer."
-    }
-}
 
 
 function Activate-Windows {
@@ -495,6 +455,48 @@ function Show-MainMenu {
     Write-Host " 8. Install / Activate Office`n"
     Write-Host " 9. Exit`n"
 }
+
+function RunIDM {
+    $scriptUrl = "https://massgrave.dev/ias"
+    $command = "irm $scriptUrl | iex"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
+    Write-Host "IDM cleanup script executed." -ForegroundColor Green
+}
+
+function InstallMB {
+    $url = "https://downloads.malwarebytes.com/file/mb-windows"
+    $output = "mb-windows.exe"
+
+    Write-Host "Downloading Malwarebytes installer..."
+    Invoke-WebRequest -Uri $url -OutFile $output
+
+    if (Test-Path $output) {
+        Write-Host "Download completed. Installing Malwarebytes..."
+        Start-Process -FilePath $output -Wait
+        Write-Host "Installation complete."
+    }
+    else {
+        Write-Host "Failed to download Malwarebytes installer."
+    }
+}
+
+function InstallISLC {
+    $url = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
+    $output = "ISLC.exe"
+
+    Write-Host "Downloading Intelligent Standby List Cleaner (ISLC) installer..."
+    Invoke-WebRequest -Uri $url -OutFile $output
+
+    if (Test-Path $output) {
+        Write-Host "Download completed. Running ISLC..."
+        Start-Process -FilePath $output -Wait
+        Write-Host "ISLC execution complete."
+    }
+    else {
+        Write-Host "Failed to download ISLC installer."
+    }
+}
+
 
 # --- Main Menu Loop ---
 do {
