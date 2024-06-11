@@ -404,8 +404,9 @@ function Show-OptimizeMenu {
     Write-Host "7. Remove Windows Bloatware"
     Write-Host "8. Disable Unnecessary Startup Programs"
     Write-Host "9. Revert All Changes"
-    Write-Host "10. Back to Main Menu`n"
+    Write-Host "10. Back to Main Menu"  # Closing quote added here
 }
+
 
 function Optimize-Performance {
     do {
@@ -436,7 +437,7 @@ function Optimize-Performance {
                 Disable-UnnecessaryStartupPrograms
                 Write-Host "Disable-UnnecessaryStartupPrograms - Done" -ForegroundColor Green 
 
-                break # Exit the switch statement after "Optimize All" 
+                break  # Only one break needed here
             }
             2 { Disable-PagingFile } # No extra feedback for individual options
             3 { Apply-RegistryTweaks }
@@ -450,7 +451,8 @@ function Optimize-Performance {
             default { Write-Host "Invalid choice. Please try again." } # Closing quote added!
         }
     } while ($optChoice -ne 10)
-} # Closing brace added here!
+} 
+
 
 function Show-MainMenu {
     Write-Host -ForegroundColor Blue -NoNewline "`nWelcome To the All Included Script`nby h4n1 - bdark`n"
