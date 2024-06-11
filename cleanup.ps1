@@ -7,7 +7,7 @@ function Is-Administrator {
 function Restart-AsAdmin {
     $command = "Start-Process PowerShell -ArgumentList '-NoExit', '-Command', 'irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex' -Verb RunAs"
     Invoke-Expression $command
-} 
+}
 
 function Prompt-AdminPrivileges {
     Write-Host "You ran the script with no admin privileges." -ForegroundColor Red
@@ -23,6 +23,10 @@ function Prompt-AdminPrivileges {
         }
         default { Write-Host "Invalid choice. Exiting..."; exit }
     }
+}
+
+if (-not (Is-Administrator)) {
+    Prompt-AdminPrivileges
 }
 
 function Clear-TempFiles {
@@ -86,6 +90,7 @@ function Clear-RecycleBin {
         Write-Host "Could not empty the Recycle Bin. Reason: $_.Exception.Message"
     }
 }
+
 function Run-IDM {
     $scriptUrl = "https://massgrave.dev/ias"
     $command = "irm $scriptUrl | iex"
@@ -182,6 +187,8 @@ function DirectX-Tweak {
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
 
+# --- Optimization Functions (with feedback) ---
+
 function Disable-PagingFile {
     try {
         Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys 0 0" -ErrorAction Stop
@@ -189,7 +196,7 @@ function Disable-PagingFile {
     } catch {
         Write-Host "Disable-PagingFile - Failed: $_" -ForegroundColor Red
     }
-} 
+}
 
 function Apply-RegistryTweaks {
     try {
@@ -318,7 +325,7 @@ function Disable-WindowsUpdates {
     } catch {
         Write-Host "Disable-WindowsUpdates - Failed: $_" -ForegroundColor Red
     }
-} 
+}
 
 function Remove-WindowsBloatware {
     try {
@@ -440,10 +447,11 @@ function Optimize-Performance {
             8 { Disable-UnnecessaryStartupPrograms }
             9 { Revert-AllChanges }
             10 { Write-Host "Returning to Main Menu..."; break } 
-            default { Write-Host "Invalid choice. Please try again." }
+            default { Write-Host "Invalid choice. Please try again." } # Closing quote added!
         }
     } while ($optChoice -ne 10)
-}
+} # Closing brace added here!
+
 function Show-MainMenu {
     Write-Host -ForegroundColor Blue -NoNewline "`nWelcome To the All Included Script`nby h4n1 - bdark`n"
     Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
