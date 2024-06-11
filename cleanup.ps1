@@ -435,7 +435,7 @@ function Optimize-Performance {
             8 { Disable-UnnecessaryStartupPrograms }
             9 { Revert-AllChanges }
             10 { Write-Host "Returning to Main Menu..."; break } 
-            default { Write-Host "Invalid choice. Please try again." }
+            default { Write-Host "Invalid choice. Please try again." } # Closing quote added!
         }
     } while ($optChoice -ne 10)
 }
