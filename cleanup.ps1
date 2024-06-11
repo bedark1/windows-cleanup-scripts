@@ -188,37 +188,306 @@ function DirectX-Tweak {
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
 
+# --- Optimization Functions (with feedback) ---
+
+function Disable-PagingFile {
+    try {
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys 0 0" -ErrorAction Stop
+        Write-Host "Disable-PagingFile  - Done" -ForegroundColor Green
+    } catch {
+        Write-Host "Disable-PagingFile - Failed: $_" -ForegroundColor Red
+    }
+}
+
+function Apply-RegistryTweaks {
+    try {
+        $regContent = @"
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power]
+"ExitLatency"=dword:00000001 
+"ExitLatencyCheckEnabled"=dword:00000001
+"SleepCompatTest"=dword:00000001
+"SleepLatencyTest"=dword:00000001
+"TestStandby"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WbioSrvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PcaSvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TrkWks]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SysMain]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WSearch]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WMPNetworkSvc]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management]
+"ClearPageFileAtShutdown"=dword:00000001
+"LargeSystemCache"=dword:00000001
+"SecondLevelDataCache"=dword:00000001
+"NonPagedPoolQuota"=dword:00000001
+"PagedPoolQuota"=dword:00000001
+"PhysicalAddressExtension"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Executive]
+"AdditionalCriticalWorkerThreads"=dword:00000004
+"AdditionalDelayedWorkerThreads"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Executive]
+"AdditionalCriticalWorkerThreads"=dword:00000004
+"AdditionalDelayedWorkerThreads"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power]
+"IdleResiliency"=dword:00000001
+"IdleResiliencyCheckEnabled"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WbioSrvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PcaSvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TrkWks]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SysMain]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WSearch]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WMPNetworkSvc]
+"Start"=dword:00000004
+"@
+        $regFilePath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "registryTweaks.reg")
+        $regContent | Out-File -FilePath $regFilePath -Encoding ascii -Force
+        Start-Process "regedit.exe" -ArgumentList "/s", $regFilePath -NoNewWindow -Wait
+        Write-Host "Apply-RegistryTweaks - Done" -ForegroundColor Green
+    } catch {
+        Write-Host "Apply-RegistryTweaks - Failed: $_" -ForegroundColor Red
+    }
+}
+
+function Disable-UnnecessaryServices {
+    try {
+        $services = @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")
+        foreach ($service in $services) {
+            Stop-Service -Name $service -Force -ErrorAction Stop
+            Set-Service -Name $service -StartupType Disabled -ErrorAction Stop
+            Write-Host "$service service disabled successfully."
+        }
+        Write-Host "Disable-UnnecessaryServices - Done" -ForegroundColor Green
+    } catch {
+        Write-Host "Disable-UnnecessaryServices - Failed: $_" -ForegroundColor Red
+    }
+}
+
+function Adjust-GraphicsAndMultimediaSettings {
+    try {
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Multimedia\Audio" -Name "DisableProtectedAudioDG" -Value 1 -ErrorAction Stop
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Direct3D" -Name "ForceDriverVersion" -Value "9.18.13.2049" -ErrorAction Stop
+        Write-Host "Adjust-GraphicsAndMultimediaSettings - Done" -ForegroundColor Green
+    } catch {
+        Write-Host "Adjust-GraphicsAndMultimediaSettings - Failed: $_" -ForegroundColor Red
+    }
+}
+
+function Disable-WindowsUpdates {
+    try {
+        Stop-Service -Name wuauserv -Force -ErrorAction Stop
+        Set-Service -Name wuauserv -StartupType Disabled -ErrorAction Stop
+        Write-Host "Disable-WindowsUpdates - Done" -ForegroundColor Green
+    } catch {
+        Write-Host "Disable-WindowsUpdates - Failed: $_" -ForegroundColor Red
+    }
+}
+
+function Remove-WindowsBloatware {
+    try {
+        $bloatwareApps = @(
+            "Microsoft.3DBuilder",
+            "Microsoft.BingFinance",
+            "Microsoft.BingNews",
+            "Microsoft.BingSports",
+            "Microsoft.BingWeather",
+            "Microsoft.GetHelp",
+            "Microsoft.Getstarted",
+            "Microsoft.MicrosoftOfficeHub",
+            "Microsoft.MicrosoftSolitaireCollection",
+            "Microsoft.MicrosoftStickyNotes",
+            "Microsoft.OneConnect",
+            "Microsoft.People",
+            "Microsoft.Print3D",
+            "Microsoft.SkypeApp",
+            "Microsoft.Wallet",
+            "Microsoft.WindowsFeedbackHub",
+            "Microsoft.XboxApp",
+            "Microsoft.ZuneMusic",
+            "Microsoft.ZuneVideo"
+        )
+        foreach ($app in $bloatwareApps) {
+            Get-AppxPackage -Name $app | Remove-AppxPackage -ErrorAction Stop
+            Write-Host "$app removed successfully."
+        }
+        Write-Host "Remove-WindowsBloatware - Done" -ForegroundColor Green
+    } catch {
+        Write-Host "Remove-WindowsBloatware - Failed: $_" -ForegroundColor Red
+    }
+}
+
+function Disable-UnnecessaryStartupPrograms {
+    try {
+        $startupItems = @(
+            "OneDrive",
+            "Skype",
+            "Spotify",
+            "Cortana"
+        )
+        foreach ($item in $startupItems) {
+            Stop-Process -Name $item -Force -ErrorAction Stop
+            Write-Host "$item disabled successfully."
+        }
+        Write-Host "Disable-UnnecessaryStartupPrograms - Done" -ForegroundColor Green
+    } catch {
+        Write-Host "Disable-UnnecessaryStartupPrograms - Failed: $_" -ForegroundColor Red
+    }
+}
+
+function Revert-AllChanges {
+    try {
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys" -ErrorAction Stop
+        Start-Service -Name wuauserv -ErrorAction Stop
+        Set-Service -Name wuauserv -StartupType Automatic -ErrorAction Stop
+        foreach ($service in @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")) {
+            Start-Service -Name $service -ErrorAction Stop
+            Set-Service -Name $service -StartupType Automatic -ErrorAction Stop
+        }
+        Write-Host "Revert-AllChanges - Done" -ForegroundColor Green
+    } catch {
+        Write-Host "Revert-AllChanges - Failed: $_" -ForegroundColor Red
+    }
+}
+
+
+function Optimize-Performance {
+    do {
+        Show-OptimizeMenu
+        $optChoice = Read-Host "Enter your choice"
+
+        switch ($optChoice) {
+            1 { 
+                # Call each optimization function with feedback for "Optimize All"
+                Disable-PagingFile
+                Write-Host "Disable-PagingFile - Done" -ForegroundColor Green
+                
+                Apply-RegistryTweaks
+                Write-Host "Apply-RegistryTweaks - Done" -ForegroundColor Green
+
+                Disable-UnnecessaryServices 
+                Write-Host "Disable-UnnecessaryServices - Done" -ForegroundColor Green
+
+                Adjust-GraphicsAndMultimediaSettings
+                Write-Host "Adjust-GraphicsAndMultimediaSettings - Done" -ForegroundColor Green
+
+                Disable-WindowsUpdates 
+                Write-Host "Disable-WindowsUpdates - Done" -ForegroundColor Green
+
+                Remove-WindowsBloatware
+                Write-Host "Remove-WindowsBloatware - Done" -ForegroundColor Green
+
+                Disable-UnnecessaryStartupPrograms
+                Write-Host "Disable-UnnecessaryStartupPrograms - Done" -ForegroundColor Green 
+
+                break # Exit the switch statement after "Optimize All" 
+            }
+            2 { Disable-PagingFile } # No extra feedback for individual options
+            3 { Apply-RegistryTweaks }
+            4 { Disable-UnnecessaryServices }
+            5 { Adjust-GraphicsAndMultimediaSettings }
+            6 { Disable-WindowsUpdates }
+            7 { Remove-WindowsBloatware }
+            8 { Disable-UnnecessaryStartupPrograms }
+            9 { Revert-AllChanges }
+            10 { Write-Host "Returning to Main Menu..."; break } 
+            default { Write-Host "Invalid choice. Please try again." }
+        }
+    } while ($optChoice -ne 10)
+}
+
+function Show-OptimizeMenu {
+    Write-Host "`nOptimize Windows Performance:`" -ForegroundColor Yellow
+    Write-Host "1. Optimize Windows Performance (All)"
+    Write-Host "2. Disable Paging File"
+    Write-Host "3. Apply Registry Tweaks"
+    Write-Host "4. Disable Unnecessary Services"
+    Write-Host "5. Adjust Graphics and Multimedia Settings"
+    Write-Host "6. Disable Windows Updates"
+    Write-Host "7. Remove Windows Bloatware"
+    Write-Host "8. Disable Unnecessary Startup Programs"
+    Write-Host "9. Revert All Changes"
+    Write-Host "10. Back to Main Menu`n"
+}
+
 function Show-MainMenu {
     Write-Host -ForegroundColor Blue -NoNewline "`nWelcome To the All Included Script`nby h4n1 - bdark`n"
     Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
     Write-Host " Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
-    Write-Host " 2. Intelligent standby list cleaner (ISLC)`n"
+    Write-Host " 2. Optimize Windows Performance" 
+    Write-Host " 3. Intelligent standby list cleaner (ISLC)`n"
     Write-Host " DirectX:" -ForegroundColor Blue
-    Write-Host " 3. DirectX Tweak`n"
+    Write-Host " 4. DirectX Tweak`n"
     Write-Host " Security:" -ForegroundColor Blue
-    Write-Host " 4. Install Malwarebytes`n"
+    Write-Host " 5. Install Malwarebytes`n"
     Write-Host " Internet:" -ForegroundColor Blue
-    Write-Host " 5. Install IDM`n"
+    Write-Host " 6. Install IDM`n"
     Write-Host " Microsoft:" -ForegroundColor Blue
-    Write-Host " 6. Install / Activate Windows"
-    Write-Host " 7. Install / Activate Office`n"
-    Write-Host " 8. Exit`n"
+    Write-Host " 7. Install / Activate Windows"
+    Write-Host " 8. Install / Activate Office`n"
+    Write-Host " 9. Exit`n"
 }
 
+# --- Main Menu Loop ---
 do {
     Show-MainMenu
     $choice = Read-Host "Enter your choice"
 
     switch ($choice) {
         1 { Clear-TempFiles; Clear-BrowserCache; Clear-RecycleBin }
-        2 { Install-ISLC }
-        3 { DirectX-Tweak }
-        4 { Install-MB }
-        5 { Run-IDM }
-        6 { Activate-Windows }
-        7 { Activate-Office }
-        8 { Write-Host "Exiting..."; break }
+        2 { Optimize-Performance }
+        3 { Install-ISLC }
+        4 { DirectX-Tweak }
+        5 { Install-MB }
+        6 { Run-IDM }
+        7 { Activate-Windows }
+        8 { Activate-Office }
+        9 { Write-Host "Exiting..."; break }
         default { Write-Host "Invalid choice. Please try again." }
     }
-} while ($choice -ne 8)
+} while ($choice -ne 9) 
