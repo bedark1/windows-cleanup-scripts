@@ -40,7 +40,8 @@ function Clear-TempFiles {
         Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
             try {
                 Remove-Item -Path $_.FullName -Force -Recurse -ErrorAction Stop
-            } catch {
+            }
+            catch {
                 Write-Host "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
             }
         }
@@ -59,7 +60,8 @@ function Clear-BrowserCache {
         Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
             try {
                 Remove-Item -Path $_.FullName -Force -Recurse -ErrorAction Stop
-            } catch {
+            }
+            catch {
                 Write-Host "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
             }
         }
@@ -80,13 +82,15 @@ function Clear-RecycleBin {
         $recycleBin.Items() | ForEach-Object {
             try {
                 $_.InvokeVerb("delete")
-            } catch {
+            }
+            catch {
                 Write-Host "Could not delete item: $($_.Name) - $($_.Exception.Message)"
             }
         }
         [Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
         Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "Could not empty the Recycle Bin. Reason: $_.Exception.Message"
     }
 }
@@ -109,7 +113,8 @@ function Install-MB {
         Write-Host "Download completed. Installing Malwarebytes..."
         Start-Process -FilePath $output -Wait
         Write-Host "Installation complete."
-    } else {
+    }
+    else {
         Write-Host "Failed to download Malwarebytes installer."
     }
 }
@@ -124,7 +129,8 @@ function Install-ISLC {
         Write-Host "Download completed. Running ISLC..."
         Start-Process -FilePath $output -Wait
         Write-Host "ISLC execution complete."
-    } else {
+    }
+    else {
         Write-Host "Failed to download ISLC installer."
     }
 }
@@ -148,20 +154,20 @@ function DirectX-Tweak {
     $registryPath = "HKLM:\SOFTWARE\Microsoft\DirectX"
 
     $registryValues = @{
-        "D3D11_ALLOW_TILING" = 1
-        "D3D12_CPU_PAGE_TABLE_ENABLED" = 1
-        "D3D12_ALLOW_TILING" = 1
-        "D3D12_HEAP_SERIALIZATION_ENABLED" = 1
-        "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE" = 1
-        "D3D11_DEFERRED_CONTEXTS" = 1
-        "D3D12_MAP_HEAP_ALLOCATIONS" = 1
-        "D3D11_ENABLE_DYNAMIC_CODEGEN" = 1
+        "D3D11_ALLOW_TILING"                        = 1
+        "D3D12_CPU_PAGE_TABLE_ENABLED"              = 1
+        "D3D12_ALLOW_TILING"                        = 1
+        "D3D12_HEAP_SERIALIZATION_ENABLED"          = 1
+        "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE"  = 1
+        "D3D11_DEFERRED_CONTEXTS"                   = 1
+        "D3D12_MAP_HEAP_ALLOCATIONS"                = 1
+        "D3D11_ENABLE_DYNAMIC_CODEGEN"              = 1
         "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS" = 1
-        "D3D12_MULTITHREADED" = 1
-        "D3D12_RESIDENCY_MANAGEMENT_ENABLED" = 1
-        "D3D11_MULTITHREADED" = 1
-        "D3D12_RESOURCE_ALIGNMENT" = 1
-        "D3D12_DEFERRED_CONTEXTS" = 1
+        "D3D12_MULTITHREADED"                       = 1
+        "D3D12_RESIDENCY_MANAGEMENT_ENABLED"        = 1
+        "D3D11_MULTITHREADED"                       = 1
+        "D3D12_RESOURCE_ALIGNMENT"                  = 1
+        "D3D12_DEFERRED_CONTEXTS"                   = 1
     }
 
     foreach ($valueName in $registryValues.Keys) {
@@ -169,15 +175,18 @@ function DirectX-Tweak {
             try {
                 New-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -PropertyType DWORD -Force | Out-Null
                 Write-Host "Created registry value: $valueName"
-            } catch {
+            }
+            catch {
                 Write-Host "Failed to create registry value: $valueName"
                 Write-Host "Error: $_"
             }
-        } else {
+        }
+        else {
             try {
                 Set-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -ErrorAction Stop
                 Write-Host "Modified registry value: $valueName"
-            } catch {
+            }
+            catch {
                 Write-Host "Failed to modify registry value: $valueName"
                 Write-Host "Error: $_"
             }
@@ -193,7 +202,8 @@ function Disable-PagingFile {
     try {
         Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys 0 0" -ErrorAction Stop
         Write-Host "Disable-PagingFile  - Done" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "Disable-PagingFile - Failed: $_" -ForegroundColor Red
     }
 }
@@ -288,7 +298,8 @@ Windows Registry Editor Version 5.00
         $regContent | Out-File -FilePath $regFilePath -Encoding ascii -Force
         Start-Process "regedit.exe" -ArgumentList "/s", $regFilePath -NoNewWindow -Wait
         Write-Host "Apply-RegistryTweaks - Done" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "Apply-RegistryTweaks - Failed: $_" -ForegroundColor Red
     }
 }
@@ -302,7 +313,8 @@ function Disable-UnnecessaryServices {
             Write-Host "$service service disabled successfully."
         }
         Write-Host "Disable-UnnecessaryServices - Done" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "Disable-UnnecessaryServices - Failed: $_" -ForegroundColor Red
     }
 }
@@ -312,7 +324,8 @@ function Adjust-GraphicsAndMultimediaSettings {
         Set-ItemProperty -Path "HKCU:\Software\Microsoft\Multimedia\Audio" -Name "DisableProtectedAudioDG" -Value 1 -ErrorAction Stop
         Set-ItemProperty -Path "HKCU:\Software\Microsoft\Direct3D" -Name "ForceDriverVersion" -Value "9.18.13.2049" -ErrorAction Stop
         Write-Host "Adjust-GraphicsAndMultimediaSettings - Done" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "Adjust-GraphicsAndMultimediaSettings - Failed: $_" -ForegroundColor Red
     }
 }
@@ -322,7 +335,8 @@ function Disable-WindowsUpdates {
         Stop-Service -Name wuauserv -Force -ErrorAction Stop
         Set-Service -Name wuauserv -StartupType Disabled -ErrorAction Stop
         Write-Host "Disable-WindowsUpdates - Done" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "Disable-WindowsUpdates - Failed: $_" -ForegroundColor Red
     }
 }
@@ -355,7 +369,8 @@ function Remove-WindowsBloatware {
             Write-Host "$app removed successfully."
         }
         Write-Host "Remove-WindowsBloatware - Done" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "Remove-WindowsBloatware - Failed: $_" -ForegroundColor Red
     }
 }
@@ -373,7 +388,8 @@ function Disable-UnnecessaryStartupPrograms {
             Write-Host "$item disabled successfully."
         }
         Write-Host "Disable-UnnecessaryStartupPrograms - Done" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "Disable-UnnecessaryStartupPrograms - Failed: $_" -ForegroundColor Red
     }
 }
@@ -388,13 +404,13 @@ function Revert-AllChanges {
             Set-Service -Name $service -StartupType Automatic -ErrorAction Stop
         }
         Write-Host "Revert-AllChanges - Done" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "Revert-AllChanges - Failed: $_" -ForegroundColor Red
     }
 }
 
 function Show-OptimizeMenu {
-    Write-Host "`nOptimize Windows Performance:`" -ForegroundColor Yellow
     Write-Host "1. Optimize Windows Performance (All)"
     Write-Host "2. Disable Paging File"
     Write-Host "3. Apply Registry Tweaks"
@@ -404,7 +420,7 @@ function Show-OptimizeMenu {
     Write-Host "7. Remove Windows Bloatware"
     Write-Host "8. Disable Unnecessary Startup Programs"
     Write-Host "9. Revert All Changes"
-    Write-Host "10. Back to Main Menu"  # Closing quote added here
+    Write-Host "10. Back to Main Menu"
 }
 
 
