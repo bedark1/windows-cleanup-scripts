@@ -188,37 +188,273 @@ function DirectX-Tweak {
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
 
+function Optimize-Performance-All {
+    Disable-PagingFile
+    Apply-RegistryTweaks
+    Disable-UnnecessaryServices
+    Adjust-GraphicsAndMultimediaSettings
+    Disable-WindowsUpdates
+    Remove-WindowsBloatware
+    Disable-UnnecessaryStartupPrograms
+}
+
+function Optimize-Performance {
+    function Disable-PagingFile {
+        try {
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys 0 0" -ErrorAction Stop
+            Write-Host "Paging file disabled successfully."
+        } catch {
+            Handle-Error "Failed to disable paging file. $_"
+        }
+    }
+
+    function Apply-RegistryTweaks {
+        try {
+            $regContent = @"
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power]
+"ExitLatency"=dword:00000001 
+"ExitLatencyCheckEnabled"=dword:00000001
+"SleepCompatTest"=dword:00000001
+"SleepLatencyTest"=dword:00000001
+"TestStandby"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WbioSrvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PcaSvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TrkWks]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SysMain]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WSearch]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WMPNetworkSvc]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management]
+"ClearPageFileAtShutdown"=dword:00000001
+"LargeSystemCache"=dword:00000001
+"SecondLevelDataCache"=dword:00000001
+"NonPagedPoolQuota"=dword:00000001
+"PagedPoolQuota"=dword:00000001
+"PhysicalAddressExtension"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Executive]
+"AdditionalCriticalWorkerThreads"=dword:00000004
+"AdditionalDelayedWorkerThreads"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Executive]
+"AdditionalCriticalWorkerThreads"=dword:00000004
+"AdditionalDelayedWorkerThreads"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power]
+"IdleResiliency"=dword:00000001
+"IdleResiliencyCheckEnabled"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WbioSrvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PcaSvc]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TrkWks]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SysMain]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WSearch]
+"Start"=dword:00000003
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WMPNetworkSvc]
+"Start"=dword:00000004
+"@
+            $regFilePath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "registryTweaks.reg")
+            $regContent | Out-File -FilePath $regFilePath -Encoding ascii -Force
+            Start-Process "regedit.exe" -ArgumentList "/s", $regFilePath -NoNewWindow -Wait
+            Write-Host "Registry tweaks applied successfully."
+        } catch {
+            Handle-Error "Failed to apply registry tweaks. $_"
+        }
+    }
+
+    function Disable-UnnecessaryServices {
+        $services = @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")
+        foreach ($service in $services) {
+            try {
+                Stop-Service -Name $service -Force -ErrorAction Stop
+                Set-Service -Name $service -StartupType Disabled -ErrorAction Stop
+                Write-Host "$service service disabled successfully."
+            } catch {
+                Handle-Error "Failed to disable $service service. $_"
+            }
+        }
+    }
+
+    function Adjust-GraphicsAndMultimediaSettings {
+        try {
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Multimedia\Audio" -Name "DisableProtectedAudioDG" -Value 1 -ErrorAction Stop
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Direct3D" -Name "ForceDriverVersion" -Value "9.18.13.2049" -ErrorAction Stop
+            Write-Host "Graphics and multimedia settings adjusted successfully."
+        } catch {
+            Handle-Error "Failed to adjust graphics and multimedia settings. $_"
+        }
+    }
+
+    function Disable-WindowsUpdates {
+        try {
+            Stop-Service -Name wuauserv -Force -ErrorAction Stop
+            Set-Service -Name wuauserv -StartupType Disabled -ErrorAction Stop
+            Write-Host "Windows Updates disabled successfully."
+        } catch {
+            Handle-Error "Failed to disable Windows Updates. $_"
+        }
+    }
+
+    function Remove-WindowsBloatware {
+        $bloatwareApps = @(
+            "Microsoft.3DBuilder",
+            "Microsoft.BingFinance",
+            "Microsoft.BingNews",
+            "Microsoft.BingSports",
+            "Microsoft.BingWeather",
+            "Microsoft.GetHelp",
+            "Microsoft.Getstarted",
+            "Microsoft.MicrosoftOfficeHub",
+            "Microsoft.MicrosoftSolitaireCollection",
+            "Microsoft.MicrosoftStickyNotes",
+            "Microsoft.OneConnect",
+            "Microsoft.People",
+            "Microsoft.Print3D",
+            "Microsoft.SkypeApp",
+            "Microsoft.Wallet",
+            "Microsoft.WindowsFeedbackHub",
+            "Microsoft.XboxApp",
+            "Microsoft.ZuneMusic",
+            "Microsoft.ZuneVideo"
+        )
+        foreach ($app in $bloatwareApps) {
+            try {
+                Get-AppxPackage -Name $app | Remove-AppxPackage -ErrorAction Stop
+                Write-Host "$app removed successfully."
+            } catch {
+                Handle-Error "Failed to remove $app. $_"
+            }
+        }
+    }
+
+    function Disable-UnnecessaryStartupPrograms {
+        $startupItems = @(
+            "OneDrive",
+            "Skype",
+            "Spotify",
+            "Cortana"
+        )
+        foreach ($item in $startupItems) {
+            try {
+                Stop-Process -Name $item -Force -ErrorAction Stop
+                Write-Host "$item disabled successfully."
+            } catch {
+                Handle-Error "Failed to disable $item. $_"
+            }
+        }
+    }
+
+    function Revert-AllChanges {
+        try {
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys" -ErrorAction Stop
+            Start-Service -Name wuauserv -ErrorAction Stop
+            Set-Service -Name wuauserv -StartupType Automatic -ErrorAction Stop
+            foreach ($service in @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")) {
+                Start-Service -Name $service -ErrorAction Stop
+                Set-Service -Name $service -StartupType Automatic -ErrorAction Stop
+            }
+            Write-Host "All changes reverted successfully."
+        } catch {
+            Handle-Error "Failed to revert changes. $_"
+        }
+    }
+
+    function Show-OptimizeMenu {
+        Write-Host "`nOptimize Windows Performance:`" -ForegroundColor Yellow
+        Write-Host "1. Optimize Windows Performance (All)"
+        Write-Host "2. Disable Paging File"
+        Write-Host "3. Apply Registry Tweaks"
+        Write-Host "4. Disable Unnecessary Services"
+        Write-Host "5. Adjust Graphics and Multimedia Settings"
+        Write-Host "6. Disable Windows Updates"
+        Write-Host "7. Remove Windows Bloatware"
+        Write-Host "8. Disable Unnecessary Startup Programs"
+        Write-Host "9. Revert All Changes"
+        Write-Host "10. Back to Main Menu`n"
+    }
+
+    do {
+        Show-OptimizeMenu
+        $optChoice = Read-Host "Enter your choice"
+
+        switch ($optChoice) {
+            1 { Optimize-Performance-All }
+            2 { Disable-PagingFile }
+            3 { Apply-RegistryTweaks }
+            4 { Disable-UnnecessaryServices }
+            5 { Adjust-GraphicsAndMultimediaSettings }
+            6 { Disable-WindowsUpdates }
+            7 { Remove-WindowsBloatware }
+            8 { Disable-UnnecessaryStartupPrograms }
+            9 { Revert-AllChanges }
+            10 { Write-Host "Returning to Main Menu..."; break }
+            default { Write-Host "Invalid choice. Please try again." }
+        }
+    } while ($optChoice -ne 10)
+}
+
 function Show-MainMenu {
     Write-Host -ForegroundColor Blue -NoNewline "`nWelcome To the All Included Script`nby h4n1 - bdark`n"
     Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
     Write-Host " Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
-    Write-Host " 2. Intelligent standby list cleaner (ISLC)`n"
-    Write-Host " DirectX:" -ForegroundColor Blue
-    Write-Host " 3. DirectX Tweak`n"
-    Write-Host " Security:" -ForegroundColor Blue
-    Write-Host " 4. Install Malwarebytes`n"
-    Write-Host " Internet:" -ForegroundColor Blue
-    Write-Host " 5. Install IDM`n"
-    Write-Host " Microsoft:" -ForegroundColor Blue
-    Write-Host " 6. Install / Activate Windows"
-    Write-Host " 7. Install / Activate Office`n"
-    Write-Host " 8. Exit`n"
+    Write-Host " 2. Optimize Windows Performance (All)"
+    Write-Host " 3. Intelligent standby list cleaner (ISLC)`n"
 }
 
-do {
-    Show-MainMenu
-    $choice = Read-Host "Enter your choice"
+function Main-Menu {
+    do {
+        Show-MainMenu
+        $choice = Read-Host "Enter your choice"
 
-    switch ($choice) {
-        1 { Clear-TempFiles; Clear-BrowserCache; Clear-RecycleBin }
-        2 { Install-ISLC }
-        3 { DirectX-Tweak }
-        4 { Install-MB }
-        5 { Run-IDM }
-        6 { Activate-Windows }
-        7 { Activate-Office }
-        8 { Write-Host "Exiting..."; break }
-        default { Write-Host "Invalid choice. Please try again." }
-    }
-} while ($choice -ne 8)
+        switch ($choice) {
+            1 { Clear-TempFiles; Clear-BrowserCache; Clear-RecycleBin }
+            2 { Optimize-Performance }
+            3 { Install-ISLC }
+            default { Write-Host "Invalid choice. Please try again." }
+        }
+    } while ($choice -ne 3)
+}
+
+Main-Menu
