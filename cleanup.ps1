@@ -1,22 +1,22 @@
-function Is-Administrator {
+function IsAdministrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-function Restart-AsAdmin {
+function RestartAsAdmin {
     $command = "Start-Process PowerShell -ArgumentList '-NoExit', '-Command', 'irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex' -Verb RunAs"
     Invoke-Expression $command
 }
 
-function Prompt-AdminPrivileges {
+function PromptAdminPrivileges {
     Write-Host "You ran the script with no admin privileges." -ForegroundColor Red
     $choice = Read-Host "Choose an option: 1. Exit 2. Re-run with admin privileges"
     switch ($choice) {
         1 { Write-Host "Exiting..."; exit }
         2 {
             Write-Host "Re-running the script with admin privileges..."
-            Restart-AsAdmin
+            RestartAsAdmin
             Write-Host "A new PowerShell window has been opened with administrative privileges."
             Write-Host "If the new window closed immediately, please check if you have administrative rights."
             exit
@@ -25,9 +25,10 @@ function Prompt-AdminPrivileges {
     }
 }
 
-if (-not (Is-Administrator)) {
-    Prompt-AdminPrivileges
+if (-not (IsAdministrator)) {
+    PromptAdminPrivileges
 }
+
 
 function Clear-TempFiles {
     $tempPaths = @(
@@ -80,29 +81,31 @@ function Clear-RecycleBin {
         $shell = New-Object -ComObject Shell.Application
         $recycleBin = $shell.Namespace(0xA)
         $recycleBin.Items() | ForEach-Object {
+            $item = $_  # Store the current item in a variable
             try {
-                $_.InvokeVerb("delete")
+                $item.InvokeVerb("delete")
             }
             catch {
-                Write-Host "Could not delete item: $($_.Name) - $($_.Exception.Message)"
+                Write-Host "Could not delete item: $($item.Name) - $($_.Exception.Message)"
             }
         }
         [Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
         Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
     }
     catch {
-        Write-Host "Could not empty the Recycle Bin. Reason: $_.Exception.Message"
+        Write-Host "Could not empty the Recycle Bin. Reason: $($_.Exception.Message)"
     }
 }
 
-function Run-IDM {
+
+function RunIDM {
     $scriptUrl = "https://massgrave.dev/ias"
     $command = "irm $scriptUrl | iex"
     Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
     Write-Host "IDM cleanup script executed." -ForegroundColor Green
 }
 
-function Install-MB {
+function InstallMB {
     $url = "https://downloads.malwarebytes.com/file/mb-windows"
     $output = "mb-windows.exe"
 
@@ -118,7 +121,8 @@ function Install-MB {
         Write-Host "Failed to download Malwarebytes installer."
     }
 }
-function Install-ISLC {
+
+function InstallISLC {
     $url = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
     $output = "ISLC.exe"
 
@@ -135,6 +139,7 @@ function Install-ISLC {
     }
 }
 
+
 function Activate-Windows {
     $scriptUrl = "https://get.activated.win"
     $command = "irm $scriptUrl | iex"
@@ -148,7 +153,6 @@ function Activate-Office {
     Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
     Write-Host "Office activation script executed." -ForegroundColor Green
 }
-
 function DirectX-Tweak {
     Write-Host "DirectX Tweak - Applying registry modifications..."
     $registryPath = "HKLM:\SOFTWARE\Microsoft\DirectX"
@@ -171,7 +175,7 @@ function DirectX-Tweak {
     }
 
     foreach ($valueName in $registryValues.Keys) {
-        if (-not (Test-Path "$registryPath\$valueName")) {
+        if (-not (Test-Path "$registryPath\")) {
             try {
                 New-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -PropertyType DWORD -Force | Out-Null
                 Write-Host "Created registry value: $valueName"
@@ -196,7 +200,7 @@ function DirectX-Tweak {
     Write-Host "DirectX Tweak - Registry modifications complete."
 }
 
-# --- Optimization Functions (with feedback) ---
+
 
 function Disable-PagingFile {
     try {
@@ -214,7 +218,7 @@ function Apply-RegistryTweaks {
 Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power]
-"ExitLatency"=dword:00000001 
+"ExitLatency"=dword:00000001
 "ExitLatencyCheckEnabled"=dword:00000001
 "SleepCompatTest"=dword:00000001
 "SleepLatencyTest"=dword:00000001
@@ -303,7 +307,6 @@ Windows Registry Editor Version 5.00
         Write-Host "Apply-RegistryTweaks - Failed: $_" -ForegroundColor Red
     }
 }
-
 function Disable-UnnecessaryServices {
     try {
         $services = @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")
@@ -341,6 +344,7 @@ function Disable-WindowsUpdates {
     }
 }
 
+
 function Remove-WindowsBloatware {
     try {
         $bloatwareApps = @(
@@ -365,7 +369,7 @@ function Remove-WindowsBloatware {
             "Microsoft.ZuneVideo"
         )
         foreach ($app in $bloatwareApps) {
-            Get-AppxPackage -Name $app | Remove-AppxPackage -ErrorAction Stop
+            Remove-AppxPackage -Package $app -ErrorAction Stop
             Write-Host "$app removed successfully."
         }
         Write-Host "Remove-WindowsBloatware - Done" -ForegroundColor Green
@@ -374,6 +378,7 @@ function Remove-WindowsBloatware {
         Write-Host "Remove-WindowsBloatware - Failed: $_" -ForegroundColor Red
     }
 }
+
 
 function Disable-UnnecessaryStartupPrograms {
     try {
@@ -384,7 +389,7 @@ function Disable-UnnecessaryStartupPrograms {
             "Cortana"
         )
         foreach ($item in $startupItems) {
-            Stop-Process -Name $item -Force -ErrorAction Stop
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name $item -Value ""
             Write-Host "$item disabled successfully."
         }
         Write-Host "Disable-UnnecessaryStartupPrograms - Done" -ForegroundColor Green
@@ -394,14 +399,15 @@ function Disable-UnnecessaryStartupPrograms {
     }
 }
 
+
 function Revert-AllChanges {
     try {
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys" -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys" -PassThru -ErrorAction Stop
         Start-Service -Name wuauserv -ErrorAction Stop
         Set-Service -Name wuauserv -StartupType Automatic -ErrorAction Stop
         foreach ($service in @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")) {
             Start-Service -Name $service -ErrorAction Stop
-            Set-Service -Name $service -StartupType Automatic -ErrorAction Stop
+            Set-Service -Name $service -StartupType Auto -ErrorAction Stop
         }
         Write-Host "Revert-AllChanges - Done" -ForegroundColor Green
     }
@@ -409,6 +415,7 @@ function Revert-AllChanges {
         Write-Host "Revert-AllChanges - Failed: $_" -ForegroundColor Red
     }
 }
+
 
 function Show-OptimizeMenu {
     Write-Host "1. Optimize Windows Performance (All)"
@@ -492,7 +499,7 @@ function Show-MainMenu {
 # --- Main Menu Loop ---
 do {
     Show-MainMenu
-    $choice = Read-Host "Enter your choice"
+    $choice = Read-Host -Prompt "Enter your choice"
 
     switch ($choice) {
         1 { Clear-TempFiles; Clear-BrowserCache; Clear-RecycleBin }
