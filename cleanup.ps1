@@ -193,30 +193,32 @@ function Show-MainMenu {
     Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
     Write-Host " Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
-    Write-Host " 2. Intelligent standby list cleaner (ISLC)`n"
+    Write-Host " 2. Optimize Windows Performance" 
+    Write-Host " 3. Intelligent standby list cleaner (ISLC)`n"
     Write-Host " DirectX:" -ForegroundColor Blue
-    Write-Host " 3. DirectX Tweak`n"
+    Write-Host " 4. DirectX Tweak`n"
     Write-Host " Security:" -ForegroundColor Blue
-    Write-Host " 4. Install Malwarebytes`n"
+    Write-Host " 5. Install Malwarebytes`n"
     Write-Host " Internet:" -ForegroundColor Blue
-    Write-Host " 5. Install IDM`n"
+    Write-Host " 6. Install IDM`n"
     Write-Host " Microsoft:" -ForegroundColor Blue
-    Write-Host " 6. Install / Activate Windows"
-    Write-Host " 7. Install / Activate Office`n"
-    Write-Host " 8. Optimize Windows Performance`n"
-    Write-Host " 9. Exit`n"
+    Write-Host " 7. Install / Activate Windows"
+    Write-Host " 8. Install / Activate Office`n"
+    Write-Host " 9. Exit`n" 
 }
 
 function Show-OptimizeMenu {
     Write-Host "Optimize Windows Performance - Choose an option:" -ForegroundColor Cyan
-    Write-Host " 1. Disable Paging File: Disables the paging file to minimize hard pagefaults."
-    Write-Host " 2. Apply Registry Tweaks: Applies registry tweaks to reduce DPC/ISR latencies."
-    Write-Host " 3. Disable Unnecessary Services: Disables certain unnecessary services to reduce background task load."
-    Write-Host " 4. Adjust Graphics and Multimedia Settings: Adjusts registry settings for graphics and multimedia performance."
-    Write-Host " 5. Disable Windows Updates: Stops and disables the Windows Update service."
-    Write-Host " 6. Remove Windows Bloatware: Removes built-in Windows apps that are not necessary."
-    Write-Host " 7. Disable Unnecessary Startup Programs: Disables unnecessary startup programs to reduce system load."
-    Write-Host " 8. Revert all changes"
+    Write-Host " 1. Optimize All: Apply all optimizations." 
+    Write-Host " 2. Disable Paging File: Disables the paging file to minimize hard pagefaults." 
+    Write-Host " 3. Apply Registry Tweaks: Applies registry tweaks to reduce DPC/ISR latencies." 
+    Write-Host " 4. Disable Unnecessary Services: Disables certain unnecessary services to reduce background task load."
+    Write-Host " 5. Adjust Graphics and Multimedia Settings: Adjusts registry settings for graphics and multimedia performance."
+    Write-Host " 6. Disable Windows Updates: Stops and disables the Windows Update service."
+    Write-Host " 7. Remove Windows Bloatware: Removes built-in Windows apps that are not necessary."
+    Write-Host " 8. Disable Unnecessary Startup Programs: Disables unnecessary startup programs to reduce system load."
+    Write-Host " 9. Revert all changes" 
+    Write-Host "10. Back to Main Menu" 
 }
 
 function Optimize-Performance {
@@ -225,17 +227,27 @@ function Optimize-Performance {
         $choice = Read-Host "Enter your choice"
 
         switch ($choice) {
-            1 { Disable-PagingFile }
-            2 { Apply-RegistryTweaks }
-            3 { Disable-UnnecessaryServices }
-            4 { Adjust-GraphicsAndMultimediaSettings }
-            5 { Disable-WindowsUpdates }
-            6 { Remove-WindowsBloatware }
-            7 { Disable-UnnecessaryStartupPrograms }
-            8 { Revert-AllChanges }
+            1 { # Optimize All
+                Disable-PagingFile 
+                Apply-RegistryTweaks 
+                Disable-UnnecessaryServices 
+                Adjust-GraphicsAndMultimediaSettings
+                Disable-WindowsUpdates 
+                Remove-WindowsBloatware
+                Disable-UnnecessaryStartupPrograms
+            }
+            2 { Disable-PagingFile }
+            3 { Apply-RegistryTweaks }
+            4 { Disable-UnnecessaryServices }
+            5 { Adjust-GraphicsAndMultimediaSettings }
+            6 { Disable-WindowsUpdates }
+            7 { Remove-WindowsBloatware }
+            8 { Disable-UnnecessaryStartupPrograms }
+            9 { Revert-AllChanges }
+            10 { Write-Host "Returning to Main Menu..."; break } # Exit optimization menu
             default { Write-Host "Invalid choice. Please try again." }
         }
-    } while ($choice -ne 8)
+    } while ($choice -ne 10) 
 }
 
 function Clear-TempFiles {
@@ -309,14 +321,14 @@ do {
 
     switch ($choice) {
         1 { Clear-TempFiles; Clear-BrowserCache; Clear-RecycleBin }
-        2 { Install-ISLC }
-        3 { DirectX-Tweak }
-        4 { Install-MB }
-        5 { Run-IDM }
-        6 { Activate-Windows }
-        7 { Activate-Office }
-        8 { Optimize-Performance }
+        2 { Optimize-Performance } # Call the corrected function
+        3 { Install-ISLC }
+        4 { DirectX-Tweak }
+        5 { Install-MB }
+        6 { Run-IDM }
+        7 { Activate-Windows }
+        8 { Activate-Office }
         9 { Write-Host "Exiting..."; break }
         default { Write-Host "Invalid choice. Please try again." }
     }
-} while ($choice -ne 9)
+} while ($choice -ne 9) 
