@@ -122,7 +122,6 @@ function Install-MB { # Added hyphen
 }
 
 
-
 function Install-ISLC {
     # Check if 7-Zip is installed
     if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
