@@ -127,6 +127,27 @@ function Clear-RecycleBin {
 }
 
 
+function Bufferbloat-SpeedTest {
+    # Open the default web browser and navigate to the website
+    Start-Process "https://www.waveform.com/tools/bufferbloat"
+
+    # Prompt the user to start the test
+    Write-Host "Please click the 'Start Test' button on the website to begin the test."
+
+    # Display information about bufferbloat grades and their corresponding colors
+    Write-Host "`nBUFFERBLOAT GRADE:"
+    Write-Host "A: Best" -ForegroundColor Green
+    Write-Host "B: Good" -ForegroundColor Yellow
+    Write-Host "C: Bad" -ForegroundColor Red
+    Write-Host "D: Very Bad" -ForegroundColor Red
+
+    # Display information about the importance of addressing bufferbloat
+    Write-Host "It's important to address bufferbloat for both gaming and non-gaming purposes:"
+    Write-Host "• For gaming: Bufferbloat can cause noticeable delays (lag), affecting performance and enjoyment."
+    Write-Host "• For non-gaming: Bufferbloat can degrade connectivity during heavy internet usage, impacting various activities.`n"
+}
+
+
 function RunIDM {
     $scriptUrl = "https://massgrave.dev/ias"
     $command = "irm $scriptUrl | iex"
@@ -546,11 +567,11 @@ function Show-MainMenu {
     Write-Host " Security:" -ForegroundColor Blue
     Write-Host " 5. Install Malwarebytes`n"
     Write-Host " Internet:" -ForegroundColor Blue
-    Write-Host " 6. Install IDM`n"
+    Write-Host " 6. Bufferbloat and Internet Speed Test"
+    Write-Host " 7. Install IDM`n"
     Write-Host " Microsoft:" -ForegroundColor Blue
-    Write-Host " 7. Install / Activate Windows"
-    Write-Host " 8. Install / Activate Office`n"
-    Write-Host " 9. Fix Windows Search Bar Issue"
+    Write-Host " 8. Install / Activate Windows"
+    Write-Host " 9. Install / Activate Office`n"
     Write-Host " 10. Exit`n"
 }
 
@@ -566,12 +587,14 @@ do {
         3 { Install-ISLC }
         4 { DirectX-Tweak }
         5 { Install-MB }
-        6 { Run-IDM }
-        7 { Activate-Windows }
-        8 { Activate-Office }
-        9 { Create-RestorePoint -description "Before fixing Windows Search Bar"; Fix-WindowsSearchBar }
-        10 { Write-Host "Exiting..."; break }
+        6 { Bufferbloat-SpeedTest }
+        7 { Run-IDM }
+        8 { Activate-Windows }
+        9 { Activate-Office }
+        10 { Create-RestorePoint -description "Before fixing Windows Search Bar"; Fix-WindowsSearchBar }
+        11 { Write-Host "Exiting..."; break }
         default { Write-Host "Invalid choice. Please try again." }
     }
-} while ($choice -ne 10)
+} while ($choice -ne 11)
+
 
