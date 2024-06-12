@@ -95,7 +95,7 @@ function Clear-BrowserCache {
 function Fix-WindowsSearchBar {
     Write-Host "Fixing Windows Search Bar issue..." -ForegroundColor Yellow
     try {
-        Start-Process -FilePath "ctfmon.exe" -NoNewWindow -Verb RunAs -Wait
+        Invoke-Item "ctfmon.exe"
         Write-Host "Windows Search Bar should be fixed. You can now type in it." -ForegroundColor Green
     } catch {
         Write-Host "Failed to fix Windows Search Bar. Error: $_" -ForegroundColor Red
