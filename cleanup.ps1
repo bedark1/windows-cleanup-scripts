@@ -94,6 +94,7 @@ function Clear-BrowserCache {
 
 function Fix-WindowsSearchBar {
     Write-Host "Fixing Windows Search Bar issue..."
+    # Assuming the command to fix ctfmon.exe issue
     Start-Process -FilePath "ctfmon.exe" -NoNewWindow
     Write-Host "Windows Search Bar should be fixed. You can now type in it." -ForegroundColor Green
 }
@@ -560,7 +561,7 @@ function Show-MainMenu {
     Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
     Write-Host " Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
-    Write-Host " 2. Optimize Windows Performance - Carfully! Restore Point will be Made" 
+    Write-Host " 2. Optimize Windows Performance - Carefully! Restore Point will be Made" 
     Write-Host " 3. Intelligent standby list cleaner (ISLC)`n"
     Write-Host " DirectX:" -ForegroundColor Blue
     Write-Host " 4. DirectX Tweak`n"
@@ -572,11 +573,11 @@ function Show-MainMenu {
     Write-Host " Microsoft:" -ForegroundColor Blue
     Write-Host " 8. Install / Activate Windows"
     Write-Host " 9. Install / Activate Office`n"
-    Write-Host " 10. Exit`n"
+    Write-Host " 10. Fix Windows Search Bar"
+    Write-Host " 11. Exit`n"
 }
 
 
-# --- Main Menu Loop ---
 do {
     Show-MainMenu
     $choice = Read-Host -Prompt "Enter your choice"
