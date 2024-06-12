@@ -95,9 +95,10 @@ function Clear-BrowserCache {
 function Fix-WindowsSearchBar {
     Write-Host "Fixing Windows Search Bar issue..."
     # Assuming the command to fix ctfmon.exe issue
-    Start-Process -FilePath "ctfmon.exe" -NoNewWindow
+    Start-Process -FilePath "ctfmon.exe" -NoNewWindow -Verb RunAs
     Write-Host "Windows Search Bar should be fixed. You can now type in it." -ForegroundColor Green
 }
+
 
 
 function Clear-RecycleBin {
