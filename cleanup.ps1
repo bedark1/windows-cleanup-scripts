@@ -92,6 +92,13 @@ function Clear-BrowserCache {
     Write-Host "BrowserData - Done Cleaning" -ForegroundColor Green
 }
 
+function Fix-WindowsSearchBar {
+    Write-Host "Fixing Windows Search Bar issue..."
+    Start-Process -FilePath "ctfmon.exe" -NoNewWindow
+    Write-Host "Windows Search Bar should be fixed. You can now type in it." -ForegroundColor Green
+}
+
+
 function Clear-RecycleBin {
     Write-Host "RecycleBin - Clearing" -ForegroundColor Yellow
     try {
@@ -543,8 +550,10 @@ function Show-MainMenu {
     Write-Host " Microsoft:" -ForegroundColor Blue
     Write-Host " 7. Install / Activate Windows"
     Write-Host " 8. Install / Activate Office`n"
-    Write-Host " 9. Exit`n"
+    Write-Host " 9. Fix Windows Search Bar Issue"
+    Write-Host " 10. Exit`n"
 }
+
 
 # --- Main Menu Loop ---
 do {
@@ -560,7 +569,9 @@ do {
         6 { Run-IDM }
         7 { Activate-Windows }
         8 { Activate-Office }
-        9 { Write-Host "Exiting..."; break }
+        9 { Create-RestorePoint -description "Before fixing Windows Search Bar"; Fix-WindowsSearchBar }
+        10 { Write-Host "Exiting..."; break }
         default { Write-Host "Invalid choice. Please try again." }
     }
-} while ($choice -ne 9)
+} while ($choice -ne 10)
+
