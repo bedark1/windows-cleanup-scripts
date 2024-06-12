@@ -1,14 +1,35 @@
+# Function to create a system restore point
+function Create-RestorePoint {
+    param (
+        [string]$description = "System Restore Point"
+    )
+
+    Write-Host "Creating a system restore point..." -ForegroundColor Yellow
+
+    $restorePointType = [WMICLASS]"\\.\root\default:SystemRestore"
+    $result = $restorePointType.CreateRestorePoint($description, 0, 100)
+
+    if ($result.ReturnValue -eq 0) {
+        Write-Host "System restore point created successfully." -ForegroundColor Green
+    } else {
+        Write-Host "Failed to create a system restore point. Error code: $($result.ReturnValue)" -ForegroundColor Red
+    }
+}
+
+# Function to check if running as Administrator
 function IsAdministrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+# Function to restart the script as Administrator
 function RestartAsAdmin {
     $command = "Start-Process PowerShell -ArgumentList '-NoExit', '-Command', 'irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex' -Verb RunAs"
     Invoke-Expression $command
 }
 
+# Function to prompt for Administrator privileges
 function PromptAdminPrivileges {
     Write-Host "You ran the script with no admin privileges." -ForegroundColor Red
     $choice = Read-Host "Choose an option: 1. Exit 2. Re-run with admin privileges"
@@ -25,6 +46,7 @@ function PromptAdminPrivileges {
     }
 }
 
+# Check if running as Administrator
 if (-not (IsAdministrator)) {
     PromptAdminPrivileges
 }
@@ -229,6 +251,7 @@ function DirectX-Tweak {
 
 
 function Disable-PagingFile {
+    Create-RestorePoint -description "Before Disabling Paging File"
     try {
         Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys 0 0" -ErrorAction Stop
         Write-Host "Disable-PagingFile  - Done" -ForegroundColor Green
@@ -465,6 +488,7 @@ function Optimize-Performance {
         switch ($optChoice) {
             1 { 
                 # Call each optimization function with feedback for "Optimize All"
+                Create-RestorePoint -description "Before Optimize All"
                 Disable-PagingFile
                 Write-Host "Disable-PagingFile - Done" -ForegroundColor Green
                 
@@ -488,19 +512,19 @@ function Optimize-Performance {
 
                 break  # Only one break needed here
             }
-            2 { Disable-PagingFile } # No extra feedback for individual options
-            3 { Apply-RegistryTweaks }
-            4 { Disable-UnnecessaryServices }
-            5 { Adjust-GraphicsAndMultimediaSettings }
-            6 { Disable-WindowsUpdates }
-            7 { Remove-WindowsBloatware }
-            8 { Disable-UnnecessaryStartupPrograms }
+            2 { Create-RestorePoint -description "Before Disabling Paging File"; Disable-PagingFile } # No extra feedback for individual options
+            3 { Create-RestorePoint -description "Before Applying Registry Tweaks"; Apply-RegistryTweaks }
+            4 { Create-RestorePoint -description "Before Disabling Unnecessary Services"; Disable-UnnecessaryServices }
+            5 { Create-RestorePoint -description "Before Adjusting Graphics and Multimedia Settings"; Adjust-GraphicsAndMultimediaSettings }
+            6 { Create-RestorePoint -description "Before Disabling Windows Updates"; Disable-WindowsUpdates }
+            7 { Create-RestorePoint -description "Before Removing Windows Bloatware"; Remove-WindowsBloatware }
+            8 { Create-RestorePoint -description "Before Disabling Unnecessary Startup Programs"; Disable-UnnecessaryStartupPrograms }
             9 { Revert-AllChanges }
             10 { Write-Host "Returning to Main Menu..."; break } 
             default { Write-Host "Invalid choice. Please try again." } # Closing quote added!
         }
     } while ($optChoice -ne 10)
-} 
+}
 
 
 function Show-MainMenu {
@@ -508,7 +532,7 @@ function Show-MainMenu {
     Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
     Write-Host " Boost:" -ForegroundColor Blue
     Write-Host " 1. Clear Cache"
-    Write-Host " 2. Optimize Windows Performance" 
+    Write-Host " 2. Optimize Windows Performance - Carfully! Restore Point will be Made" 
     Write-Host " 3. Intelligent standby list cleaner (ISLC)`n"
     Write-Host " DirectX:" -ForegroundColor Blue
     Write-Host " 4. DirectX Tweak`n"
