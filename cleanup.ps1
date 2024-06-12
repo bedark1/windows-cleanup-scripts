@@ -179,6 +179,8 @@ function Activate-Office {
     Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
     Write-Host "Office activation script executed." -ForegroundColor Green
 }
+
+
 function DirectX-Tweak {
     Write-Host "DirectX Tweak - Applying registry modifications..."
     $registryPath = "HKLM:\SOFTWARE\Microsoft\DirectX"
@@ -191,39 +193,17 @@ function DirectX-Tweak {
         "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE"  = 1
         "D3D11_DEFERRED_CONTEXTS"                   = 1
         "D3D12_MAP_HEAP_ALLOCATIONS"                = 1
-        "D3D11_ENABLE_DYNAMIC_CODEGEN"              = 1
-        "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS" = 1
-        "D3D12_MULTITHREADED"                       = 1
-        "D3D12_RESIDENCY_MANAGEMENT_ENABLED"        = 1
-        "D3D11_MULTITHREADED"                       = 1
-        "D3D12_RESOURCE_ALIGNMENT"                  = 1
-        "D3D12_DEFERRED_CONTEXTS"                   = 1
+        "EnableD3D12"                               = 1
     }
 
-    foreach ($valueName in $registryValues.Keys) {
-        if (-not (Test-Path "$registryPath\")) {
-            try {
-                New-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -PropertyType DWORD -Force | Out-Null
-                Write-Host "Created registry value: $valueName"
-            }
-            catch {
-                Write-Host "Failed to create registry value: $valueName"
-                Write-Host "Error: $_"
-            }
-        }
-        else {
-            try {
-                Set-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -ErrorAction Stop
-                Write-Host "Modified registry value: $valueName"
-            }
-            catch {
-                Write-Host "Failed to modify registry value: $valueName"
-                Write-Host "Error: $_"
-            }
+    foreach ($name in $registryValues.Keys) {
+        try {
+            New-ItemProperty -Path $registryPath -Name $name -Value $registryValues[$name] -PropertyType DWORD -Force
+            Write-Host "Registry key $name set to $($registryValues[$name])."
+        } catch {
+            Write-Host "Failed to set registry key $name: $($_.Exception.Message)"
         }
     }
-
-    Write-Host "DirectX Tweak - Registry modifications complete."
 }
 
 
@@ -244,86 +224,30 @@ function Apply-RegistryTweaks {
 Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power]
-"ExitLatency"=dword:00000001
-"ExitLatencyCheckEnabled"=dword:00000001
-"SleepCompatTest"=dword:00000001
-"SleepLatencyTest"=dword:00000001
-"TestStandby"=dword:00000001
+"CsEnabled"=dword:00000000
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WbioSrvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PcaSvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TrkWks]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SysMain]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WSearch]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack]
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Ndu]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice]
-"Start"=dword:00000004
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU]
+"NoAutoRebootWithLoggedOnUsers"=dword:00000001
+"NoAutoUpdate"=dword:00000001
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WMPNetworkSvc]
-"Start"=dword:00000004
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem]
+"NtfsDisableLastAccessUpdate"=dword:00000001
 
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management]
-"ClearPageFileAtShutdown"=dword:00000001
-"LargeSystemCache"=dword:00000001
-"SecondLevelDataCache"=dword:00000001
-"NonPagedPoolQuota"=dword:00000001
-"PagedPoolQuota"=dword:00000001
-"PhysicalAddressExtension"=dword:00000001
+"ClearPageFileAtShutdown"=dword:00000000
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Executive]
-"AdditionalCriticalWorkerThreads"=dword:00000004
-"AdditionalDelayedWorkerThreads"=dword:00000004
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile]
+"NetworkThrottlingIndex"=dword:ffffffff
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Executive]
-"AdditionalCriticalWorkerThreads"=dword:00000004
-"AdditionalDelayedWorkerThreads"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power]
-"IdleResiliency"=dword:00000001
-"IdleResiliencyCheckEnabled"=dword:00000001
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WbioSrvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PcaSvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TrkWks]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SysMain]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WSearch]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WMPNetworkSvc]
-"Start"=dword:00000004
-"@
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games]
+"GPU Priority"=dword:00000008
+"Priority"=dword:00000006
+"Scheduling Category"="High"
+"SFIO Priority"="High"
+"@"
         $regFilePath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "registryTweaks.reg")
         $regContent | Out-File -FilePath $regFilePath -Encoding ascii -Force
         Start-Process "regedit.exe" -ArgumentList "/s", $regFilePath -NoNewWindow -Wait
@@ -333,6 +257,7 @@ Windows Registry Editor Version 5.00
         Write-Host "Apply-RegistryTweaks - Failed: $_" -ForegroundColor Red
     }
 }
+
 function Disable-UnnecessaryServices {
     try {
         $services = @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")
