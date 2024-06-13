@@ -65,104 +65,135 @@ if (-not (IsAdministrator)) {
 
 function Clear-TempFiles {
     $tempPaths = @(
-        "$env:windir\Temp\*",
-        "$env:LOCALAPPDATA\Temp\*"
+        "$env:windir\Temp", # No need for wildcard here, -Recurse handles it
+        "$env:LOCALAPPDATA\Temp"
     )
 
-    Write-Host "TempFiles - Clearing" -ForegroundColor Yellow
-    foreach ($path in $tempPaths) {
-        Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-            try {
-                Remove-Item -Path $_.FullName -Force -Recurse -ErrorAction Stop
-            }
-            catch {
-                Write-Host "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
+    Write-Host "TempFiles - Clearing..." -ForegroundColor Yellow # Added "..." for user feedback
+
+    try {
+        foreach ($path in $tempPaths) {
+            if (Test-Path -Path $path) {  # Check if the path exists
+                Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | 
+                    Remove-Item -Force -Recurse -ErrorAction Stop 
+            } else {
+                Write-Host "Path not found: $path" -ForegroundColor Yellow # Informative message 
             }
         }
+        Write-Host "TempFiles - Done Cleaning" -ForegroundColor Green
+    } catch {
+        Write-Host "Error during TempFiles cleanup: $($_.Exception.Message)" -ForegroundColor Red
     }
-    Write-Host "TempFiles - Done Cleaning" -ForegroundColor Green
 }
 
 function Clear-BrowserCache {
     $browserPaths = @(
-        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache\*",
-        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache\*"
+        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache",
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache"
     )
 
-    Write-Host "BrowserData - Clearing" -ForegroundColor Yellow
-    foreach ($path in $browserPaths) {
-        Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-            try {
-                Remove-Item -Path $_.FullName -Force -Recurse -ErrorAction Stop
-            }
-            catch {
-                Write-Host "Could not remove item: $($_.FullName) - $($_.Exception.Message)"
+    Write-Host "BrowserData - Clearing..." -ForegroundColor Yellow 
+
+    try {
+        foreach ($path in $browserPaths) {
+            if (Test-Path -Path $path) { 
+                Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | 
+                    Remove-Item -Force -Recurse -ErrorAction Stop 
+            } else {
+                Write-Host "Path not found: $path" -ForegroundColor Yellow 
             }
         }
+        Write-Host "BrowserData - Done Cleaning" -ForegroundColor Green
+    } catch {
+        Write-Host "Error during BrowserData cleanup: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Some browser data might be locked. Close the browser and try again." -ForegroundColor Yellow
     }
-    Write-Host "BrowserData - Done Cleaning" -ForegroundColor Green
 }
-
-function Fix-WindowsSearchBar {
-  Write-Host "Fixing Windows Search Bar issue..." -ForegroundColor Yellow
-  try {
-    Start-Process -FilePath "ctfmon.exe"
-    Write-Host "Windows Search Bar should be fixed. You can now type in it." -ForegroundColor Green
-  } catch {
-    Write-Host "Failed to fix Windows Search Bar. Error: $_" -ForegroundColor Red
-  }
-}
-
-
-
-
 
 function Clear-RecycleBin {
-    Write-Host "RecycleBin - Clearing" -ForegroundColor Yellow
+    Write-Host "RecycleBin - Clearing..." -ForegroundColor Yellow 
+
     try {
+        # Check PowerShell version
         if ($PSVersionTable.PSVersion.Major -lt 5) {
-            Write-Host "This script requires PowerShell version 5.0 or higher."
+            Write-Host "This script requires PowerShell version 5.0 or higher." -ForegroundColor Red
             return
         }
 
-        $shell = New-Object -ComObject Shell.Application
-        $recycleBin = $shell.Namespace(0xA)
-        $recycleBin.Items() | ForEach-Object {
-            $item = $_  # Store the current item in a variable
-            try {
-                $item.InvokeVerb("delete")
-            }
-            catch {
-                Write-Host "Could not delete item: $($item.Name) - $($_.Exception.Message)"
-            }
-        }
-        [Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
+        # Use the .Empty() method for silent emptying
+        [Microsoft.VisualBasic.FileIO.FileSystem].RecycleBin.Empty()
+
         Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Could not empty the Recycle Bin. Reason: $($_.Exception.Message)"
+
+    } catch {
+        Write-Host "Could not empty the Recycle Bin. Reason: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
+function Fix-WindowsSearchBar {
+    Write-Host "Attempting to fix Windows Search Bar issue..." -ForegroundColor Yellow
+
+    try {
+        # 1. Restart Windows Search service
+        Write-Host "  - Restarting Windows Search service..."
+        Restart-Service -Name WSearch -Force -ErrorAction Stop > $null 
+
+        # 2. Re-register relevant DLL files
+        Write-Host "  - Re-registering DLL files..."
+        $dllFiles = @(
+            "C:\Windows\System32\Windows.Storage.Search.dll",
+            "C:\Windows\System32\SearchAPI.dll",
+            "C:\Windows\System32\msfte.dll"
+        )
+        foreach ($dll in $dllFiles) {
+            if (Test-Path -Path $dll) {
+                regsvr32 /s $dll > $null  # Register silently
+            }
+        }
+
+        # 3. Ensure ctfmon.exe is running (if applicable)
+        Write-Host "  - Verifying ctfmon.exe..."
+        if (-not (Get-Process ctfmon -ErrorAction SilentlyContinue)) {
+            Start-Process -FilePath "ctfmon.exe" > $null # Start silently
+        }
+
+        Write-Host "Windows Search Bar fixes applied. Please test the search functionality." -ForegroundColor Green
+
+    } catch {
+        Write-Host "An error occurred while trying to fix the Windows Search Bar: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
 
 function Bufferbloat-SpeedTest {
     # Open the default web browser and navigate to the website
     Start-Process "https://www.waveform.com/tools/bufferbloat"
 
-    # Prompt the user to start the test
-    Write-Host "Please click the 'Start Test' button on the website to begin the test."
+    # Clear the console for better readability
+    Clear-Host 
 
-    # Display information about bufferbloat grades and their corresponding colors
-    Write-Host "`nBUFFERBLOAT GRADE:"
-    Write-Host "A: Best" -ForegroundColor Green
-    Write-Host "B: Good" -ForegroundColor Yellow
-    Write-Host "C: Bad" -ForegroundColor Red
-    Write-Host "D: Very Bad" -ForegroundColor Red
+    # Display a title for the test
+    Write-Host "========================"
+    Write-Host "  Bufferbloat Test  "
+    Write-Host "========================"
 
-    # Display information about the importance of addressing bufferbloat
-    Write-Host "It's important to address bufferbloat for both gaming and non-gaming purposes:"
-    Write-Host "• For gaming: Bufferbloat can cause noticeable delays (lag), affecting performance and enjoyment."
-    Write-Host "• For non-gaming: Bufferbloat can degrade connectivity during heavy internet usage, impacting various activities.`n"
+    Write-Host "Starting the test in your default web browser..."
+    Write-Host "Please click the 'Start Test' button on the website to begin."
+
+    # Display information about bufferbloat grades using a table-like format
+    Write-Host ""
+    Write-Host "BUFFERBLOAT GRADES"
+    Write-Host "------------------"
+    Write-Host ("{0,-5} {1}" -f "A:", "Best" ) -ForegroundColor Green
+    Write-Host ("{0,-5} {1}" -f "B:", "Good" ) -ForegroundColor Yellow
+    Write-Host ("{0,-5} {1}" -f "C:", "Bad"  ) -ForegroundColor Red
+    Write-Host ("{0,-5} {1}" -f "D:", "Very Bad") -ForegroundColor Red
+    Write-Host ""
+
+    Write-Host "Why is Bufferbloat Important?"
+    Write-Host "-----------------------------"
+    Write-Host "- Gaming: Bufferbloat can cause lag, affecting performance."
+    Write-Host "- General Use: Degrades connectivity during heavy internet usage." 
+    Write-Host ""
 }
 
 
