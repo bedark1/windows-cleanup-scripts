@@ -77,8 +77,7 @@ function Clear-TempFiles {
         foreach ($path in $tempPaths) {
             if (Test-Path -Path $path) { 
                 Write-Host "  - Clearing: $path" # Indicate before clearing
-                Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | 
-                    Remove-Item -Force -Recurse -ErrorAction Stop 
+Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
                 Write-Host "  - Cleared: $path"   # Indicate after clearing 
             } else {
                 Write-Host "  - Path not found: $path" -ForegroundColor Yellow
@@ -91,13 +90,18 @@ function Clear-TempFiles {
 }
 
 function Clear-BrowserCache {
+    # Calculate the Chrome cache path 
+    $chromePath = (Get-ItemProperty -Path "HKCU:\Software\Google\Chrome\BLBeacon" -Name userdatapath).userdatapath
+    $chromeCachePath = Join-Path $chromePath "Default\Cache"
+
+    # Define the browser paths array (include Chrome and Edge)
     $browserPaths = @(
-        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache",
+        $chromeCachePath, 
         "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache"
     )
 
     Write-Host "BrowserData - Clearing..." -ForegroundColor Yellow
-    Write-Host "  - Browser cache paths:" # Print the browser cache paths
+    Write-Host "  - Browser cache paths:"
     $browserPaths | ForEach-Object { Write-Host "    - $_" }
 
     try {
@@ -122,9 +126,9 @@ function Clear-RecycleBin {
     Write-Host "RecycleBin - Clearing..." -ForegroundColor Yellow
 
     try {
-        Write-Host "  - Emptying Recycle Bin..."  # Indicate before emptying
-        [Microsoft.VisualBasic.FileIO.FileSystem].RecycleBin.Empty()
-        Write-Host "  - Recycle Bin - Emptied"  -ForegroundColor Green # Indicate after emptying
+        Write-Host "  - Emptying Recycle Bin..."
+        rd /s /q $Recycle.Bin # Use rd command 
+        Write-Host "  - Recycle Bin - Emptied" -ForegroundColor Green
 
     } catch {
         Write-Host "Could not empty the Recycle Bin. Reason: $($_.Exception.Message)" -ForegroundColor Red
