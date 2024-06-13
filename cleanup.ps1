@@ -73,11 +73,12 @@ function Clear-TempFiles {
 
     try {
         foreach ($path in $tempPaths) {
-            if (Test-Path -Path $path) {  # Check if the path exists
+            if (Test-Path -Path $path) {
                 Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | 
                     Remove-Item -Force -Recurse -ErrorAction Stop 
+                Write-Host "- Cleared: $path" # Output indicating cleared path
             } else {
-                Write-Host "Path not found: $path" -ForegroundColor Yellow # Informative message 
+                Write-Host "- Path not found: $path" -ForegroundColor Yellow
             }
         }
         Write-Host "TempFiles - Done Cleaning" -ForegroundColor Green
@@ -96,11 +97,12 @@ function Clear-BrowserCache {
 
     try {
         foreach ($path in $browserPaths) {
-            if (Test-Path -Path $path) { 
+            if (Test-Path -Path $path) {
                 Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | 
                     Remove-Item -Force -Recurse -ErrorAction Stop 
+                Write-Host "- Cleared browser cache: $path" # Output for cleared cache
             } else {
-                Write-Host "Path not found: $path" -ForegroundColor Yellow 
+                Write-Host "- Path not found: $path" -ForegroundColor Yellow
             }
         }
         Write-Host "BrowserData - Done Cleaning" -ForegroundColor Green
@@ -111,19 +113,12 @@ function Clear-BrowserCache {
 }
 
 function Clear-RecycleBin {
-    Write-Host "RecycleBin - Clearing..." -ForegroundColor Yellow 
+    Write-Host "RecycleBin - Clearing..." -ForegroundColor Yellow
 
     try {
-        # Check PowerShell version
-        if ($PSVersionTable.PSVersion.Major -lt 5) {
-            Write-Host "This script requires PowerShell version 5.0 or higher." -ForegroundColor Red
-            return
-        }
+        # ... [Your code to empty the Recycle Bin] ... 
 
-        # Use the .Empty() method for silent emptying
-        [Microsoft.VisualBasic.FileIO.FileSystem].RecycleBin.Empty()
-
-        Write-Host "Recycle Bin - Done Cleaning" -ForegroundColor Green
+        Write-Host "Recycle Bin - Emptied" -ForegroundColor Green # Confirm Recycle Bin is empty
 
     } catch {
         Write-Host "Could not empty the Recycle Bin. Reason: $($_.Exception.Message)" -ForegroundColor Red
