@@ -236,44 +236,55 @@ function Install-MB {
 
 
 function Install-ISLC {
+    $7zInstallerUrl = "https://www.7-zip.org/a/7z1900-x64.exe"
+    $islcUrl = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
+    $7zInstallerPath = Join-Path $env:TEMP "7zInstaller.exe"
+    $islcInstallerPath = Join-Path $env:TEMP "ISLC.exe"
+
+    # Function to download a file with progress display
+    function Download-File {
+        param (
+            [string]$Url,
+            [string]$OutputPath
+        )
+        Write-Host "Downloading: $Url" -ForegroundColor Yellow
+        try {
+            $wc = New-Object System.Net.WebClient
+            $wc.DownloadProgressChanged += { 
+                $progress = $_.ProgressPercentage
+                Write-Progress -Activity "Downloading" -Status "$progress%" -PercentComplete $progress
+            }
+            $wc.DownloadFile($Url, $OutputPath)
+            Write-Host "Download completed: $OutputPath" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "Error downloading: $($_.Exception.Message)" -ForegroundColor Red
+            throw # Re-throw the error to stop the installation process
+        }
+    }
+
     # Check if 7-Zip is installed
     if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
-        # If 7-Zip is not installed, download and install it
-        Write-Host "Downloading and installing 7-Zip..."
-        $7zInstallerUrl = "https://www.7-zip.org/a/7z1900-x64.exe"
-        $7zInstallerPath = Join-Path $env:TEMP "7zInstaller.exe"
+        Write-Host "7-Zip not found. Installing 7-Zip..." 
         try {
-            Invoke-WebRequest -Uri $7zInstallerUrl -OutFile $7zInstallerPath -ErrorAction Stop
-            Start-Process -FilePath $7zInstallerPath -ArgumentList "/S" -Wait -PassThru | Wait-Process
+            Download-File -Url $7zInstallerUrl -OutputPath $7zInstallerPath
+            Start-Process -FilePath $7zInstallerPath -ArgumentList "/S" -Wait -PassThru | Out-Null
             Write-Host "7-Zip installed successfully." -ForegroundColor Green
         } catch {
-            Write-Host "Failed to download or install 7-Zip: $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host "Failed to install 7-Zip: $($_.Exception.Message)" -ForegroundColor Red
             return
         }
     } else {
         Write-Host "7-Zip is already installed." -ForegroundColor Green
     }
 
-    # Download ISLC
-    $islcUrl = "https://www.wagnardsoft.com/ISLC/ISLC%20v1.0.3.2.exe"
-    $islcInstallerPath = Join-Path $env:TEMP "ISLC.exe"
-
-    Write-Host "Downloading Intelligent Standby List Cleaner (ISLC) installer..."
+    # Download and install ISLC
     try {
-        Invoke-WebRequest -Uri $islcUrl -OutFile $islcInstallerPath -ErrorAction Stop
-    } catch {
-        Write-Host "Failed to download ISLC installer: $($_.Exception.Message)" -ForegroundColor Red
-        return
-    }
-
-    # Run ISLC installer
-    Write-Host "Running ISLC installer..."
-    try {
-        Start-Process -FilePath $islcInstallerPath -Wait -PassThru
+        Download-File -Url $islcUrl -OutputPath $islcInstallerPath
+        Start-Process -FilePath $islcInstallerPath -Wait -PassThru | Out-Null
         Write-Host "Intelligent Standby List Cleaner (ISLC) installed successfully." -ForegroundColor Green
     } catch {
         Write-Host "Failed to install ISLC: $($_.Exception.Message)" -ForegroundColor Red
-        return
     }
 }
 
@@ -281,9 +292,30 @@ function Install-ISLC {
 
 function Activate-Windows {
     $scriptUrl = "https://get.activated.win"
-    $command = "irm $scriptUrl | iex"
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
-    Write-Host "Windows activation script executed." -ForegroundColor Green
+
+    try {
+        # 1. Download the script content
+        Write-Host "Downloading Windows activation script..." -ForegroundColor Yellow
+        $scriptContent = Invoke-WebRequest -Uri $scriptUrl -ErrorAction Stop
+        Write-Host "Script downloaded." -ForegroundColor Green
+
+        # 2. Display the script content to the user 
+        Write-Host "The Windows activation script content is:" -ForegroundColor Yellow
+        Write-Host $scriptContent.Content -ForegroundColor Cyan
+        if ((Read-Host -Prompt "Do you want to review and execute this script? (y/n)") -ne "y") {
+            Write-Host "Skipping Windows activation." -ForegroundColor Yellow
+            return
+        }
+
+        # 3. Execute the script in the CURRENT PowerShell session (elevated)
+        Write-Host "Executing Windows activation script..." -ForegroundColor Yellow
+        Invoke-Expression $scriptContent.Content  
+        Write-Host "Windows activation script executed." -ForegroundColor Green
+
+    } catch {
+        Write-Host "An error occurred during Windows activation: $($_.Exception.Message)" -ForegroundColor Red
+        # Consider adding more specific error handling or logging.
+    }
 }
 
 function Activate-Office {
