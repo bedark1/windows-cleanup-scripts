@@ -65,20 +65,23 @@ if (-not (IsAdministrator)) {
 
 function Clear-TempFiles {
     $tempPaths = @(
-        "$env:windir\Temp", # No need for wildcard here, -Recurse handles it
+        "$env:windir\Temp",
         "$env:LOCALAPPDATA\Temp"
     )
 
-    Write-Host "TempFiles - Clearing..." -ForegroundColor Yellow # Added "..." for user feedback
+    Write-Host "TempFiles - Clearing..." -ForegroundColor Yellow
+    Write-Host "  - Paths to be cleared:"  # Print the paths we're about to clear
+    $tempPaths | ForEach-Object { Write-Host "    - $_" }
 
     try {
         foreach ($path in $tempPaths) {
-            if (Test-Path -Path $path) {
+            if (Test-Path -Path $path) { 
+                Write-Host "  - Clearing: $path" # Indicate before clearing
                 Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | 
                     Remove-Item -Force -Recurse -ErrorAction Stop 
-                Write-Host "- Cleared: $path" # Output indicating cleared path
+                Write-Host "  - Cleared: $path"   # Indicate after clearing 
             } else {
-                Write-Host "- Path not found: $path" -ForegroundColor Yellow
+                Write-Host "  - Path not found: $path" -ForegroundColor Yellow
             }
         }
         Write-Host "TempFiles - Done Cleaning" -ForegroundColor Green
@@ -93,16 +96,19 @@ function Clear-BrowserCache {
         "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache"
     )
 
-    Write-Host "BrowserData - Clearing..." -ForegroundColor Yellow 
+    Write-Host "BrowserData - Clearing..." -ForegroundColor Yellow
+    Write-Host "  - Browser cache paths:" # Print the browser cache paths
+    $browserPaths | ForEach-Object { Write-Host "    - $_" }
 
     try {
         foreach ($path in $browserPaths) {
             if (Test-Path -Path $path) {
+                Write-Host "  - Clearing: $path"  # Before clearing
                 Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | 
                     Remove-Item -Force -Recurse -ErrorAction Stop 
-                Write-Host "- Cleared browser cache: $path" # Output for cleared cache
+                Write-Host "  - Cleared: $path"    # After clearing
             } else {
-                Write-Host "- Path not found: $path" -ForegroundColor Yellow
+                Write-Host "  - Path not found: $path" -ForegroundColor Yellow
             }
         }
         Write-Host "BrowserData - Done Cleaning" -ForegroundColor Green
@@ -116,9 +122,9 @@ function Clear-RecycleBin {
     Write-Host "RecycleBin - Clearing..." -ForegroundColor Yellow
 
     try {
-        # ... [Your code to empty the Recycle Bin] ... 
-
-        Write-Host "Recycle Bin - Emptied" -ForegroundColor Green # Confirm Recycle Bin is empty
+        Write-Host "  - Emptying Recycle Bin..."  # Indicate before emptying
+        [Microsoft.VisualBasic.FileIO.FileSystem].RecycleBin.Empty()
+        Write-Host "  - Recycle Bin - Emptied"  -ForegroundColor Green # Indicate after emptying
 
     } catch {
         Write-Host "Could not empty the Recycle Bin. Reason: $($_.Exception.Message)" -ForegroundColor Red
