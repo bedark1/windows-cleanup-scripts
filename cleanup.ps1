@@ -200,23 +200,37 @@ function Bufferbloat-SpeedTest {
 function RunIDM {
     $scriptUrl = "https://massgrave.dev/ias"
     $command = "irm $scriptUrl | iex"
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
-    Write-Host "IDM cleanup script executed." -ForegroundColor Green
+
+    try {
+        Start-Process powershell -ArgumentList "-NoProfile", "-NoExit", "-Command", $command -Verb RunAs
+        Write-Host "IDM cleanup script launched in a new window." -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to launch IDM cleanup script: $($_.Exception.Message)" -ForegroundColor Red
+        # Consider adding more specific error handling based on error codes
+    }
 }
 
-function Install-MB { # Added hyphen 
+function Install-MB {
     $url = "https://downloads.malwarebytes.com/file/mb-windows"
-    $output = "mb-windows.exe"
+    $output = "$env:TEMP\mb-windows.exe" # Save to TEMP for easier cleanup
 
-    Write-Host "Downloading Malwarebytes installer..."
-    Invoke-WebRequest -Uri $url -OutFile $output
+    Write-Host "Downloading Malwarebytes installer..." -ForegroundColor Yellow
 
-    if (Test-Path $output) {
-        Write-Host "Download completed. Installing Malwarebytes..."
-        Start-Process -FilePath $output -Wait
-        Write-Host "Installation complete."
-    } else {
-        Write-Host "Failed to download Malwarebytes installer."
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $output -ErrorAction Stop
+        Write-Host "Download completed." -ForegroundColor Green
+
+        if (Test-Path $output) {
+            Write-Host "Installing Malwarebytes..." 
+            Start-Process -FilePath $output -Wait -PassThru | Out-Null # Install silently
+            Write-Host "Malwarebytes installation complete." -ForegroundColor Green
+        } else {
+            Write-Host "Failed to locate downloaded installer: $output" -ForegroundColor Red
+        }
+
+    } catch {
+        Write-Host "Failed to download Malwarebytes installer: $($_.Exception.Message)" -ForegroundColor Red
+        # Consider adding error logging or more specific error handling
     }
 }
 
