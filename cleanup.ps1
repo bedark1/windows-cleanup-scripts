@@ -291,7 +291,7 @@ function Install-ISLC {
 
 
 function Activate-Windows {
-    $scriptUrl = "https://get.activated.win"
+    $scriptUrl = "https://massgrave.dev/get"  # Updated URL
 
     try {
         # 1. Download the script content
@@ -309,12 +309,18 @@ function Activate-Windows {
 
         # 3. Execute the script in the CURRENT PowerShell session (elevated)
         Write-Host "Executing Windows activation script..." -ForegroundColor Yellow
-        Invoke-Expression $scriptContent.Content  
+        Invoke-Expression $scriptContent.Content 
         Write-Host "Windows activation script executed." -ForegroundColor Green
 
     } catch {
-        Write-Host "An error occurred during Windows activation: $($_.Exception.Message)" -ForegroundColor Red
-        # Consider adding more specific error handling or logging.
+        # Enhanced error handling
+        Write-Host "An error occurred during Windows activation:" -ForegroundColor Red
+        if ($_.Exception.Response -ne $null) {
+            Write-Host "Status Code: $($_.Exception.Response.StatusCode)" 
+            Write-Host "Error Details: $($_.Exception.Response.StatusDescription)"
+        } else {
+            Write-Host "Error Details: $($_.Exception.Message)"
+        }
     }
 }
 
