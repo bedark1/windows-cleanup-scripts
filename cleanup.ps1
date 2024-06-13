@@ -1,55 +1,66 @@
-# Function to create a system restore point
 function Create-RestorePoint {
     param (
         [string]$description = "System Restore Point"
     )
 
-    Write-Host "Creating a system restore point..." -ForegroundColor Yellow
+    # More informative message with description
+    Write-Host "Creating a system restore point with description: '$description'..." -ForegroundColor Yellow
 
-    $restorePointType = [WMICLASS]"\\.\root\default:SystemRestore"
-    $result = $restorePointType.CreateRestorePoint($description, 0, 100)
+    try {
+        # Using New-Object with -ComObject parameter for WMI
+        $restorePoint = New-Object -ComObject "System.Collections.Generic.Dictionary[[string],[string]]"
+        $restorePoint.Add("Description", $description) 
 
-    if ($result.ReturnValue -eq 0) {
-        Write-Host "System restore point created successfully." -ForegroundColor Green
-    } else {
-        Write-Host "Failed to create a system restore point. Error code: $($result.ReturnValue)" -ForegroundColor Red
+        # Using Get-WmiObject with -Class parameter and -Filter for efficiency
+        $systemRestore = Get-WmiObject -Class SystemRestore -Filter "Description='System Restore Point'"
+        $result = $systemRestore.CreateRestorePoint($restorePoint, 100) 
+
+        if ($result -eq 0) {
+            Write-Host "System restore point created successfully." -ForegroundColor Green
+        } else {
+            # More specific error message
+            Write-Host "Failed to create a system restore point. Error code: $result" -ForegroundColor Red
+            # Consider adding error logging here for debugging
+        }
+    } catch {
+        # Handle exceptions, provide user feedback
+        Write-Host "An error occurred while creating the restore point: $($_.Exception.Message)" -ForegroundColor Red
+        # Consider adding error logging here for debugging
     }
 }
 
-# Function to check if running as Administrator
+# Function to check if running as Administrator (using a built-in method)
 function IsAdministrator {
-    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
-    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    return ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
 # Function to restart the script as Administrator
 function RestartAsAdmin {
-    $command = "Start-Process PowerShell -ArgumentList '-NoExit', '-Command', 'irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex' -Verb RunAs"
-    Invoke-Expression $command
+    try {
+        Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile", "-NoExit", "-Command", "& { irm https://raw.githubusercontent.com/bedark1/windows-cleanup-scripts/main/cleanup.ps1 | iex }"
+        Write-Host "A new PowerShell window has been opened with administrative privileges."
+    } catch {
+        Write-Host "Failed to restart with admin privileges: $($_.Exception.Message)" -ForegroundColor Red
+        # Consider adding more specific error handling for different error codes
+    }
 }
 
 # Function to prompt for Administrator privileges
 function PromptAdminPrivileges {
-    Write-Host "You ran the script with no admin privileges." -ForegroundColor Red
-    $choice = Read-Host "Choose an option: 1. Exit 2. Re-run with admin privileges"
+    Write-Host "This script requires administrator privileges to run." -ForegroundColor Red
+    $choice = Read-Host "Choose an option: [1] Exit [2] Re-run as Administrator " 
     switch ($choice) {
-        1 { Write-Host "Exiting..."; exit }
-        2 {
-            Write-Host "Re-running the script with admin privileges..."
-            RestartAsAdmin
-            Write-Host "A new PowerShell window has been opened with administrative privileges."
-            Write-Host "If the new window closed immediately, please check if you have administrative rights."
-            exit
-        }
-        default { Write-Host "Invalid choice. Exiting..."; exit }
+        1 { exit } # No need for Write-Host here before exiting
+        2 { RestartAsAdmin }
+        default { Write-Host "Invalid choice. Exiting..." -ForegroundColor Red; exit }
     }
 }
 
 # Check if running as Administrator
 if (-not (IsAdministrator)) {
     PromptAdminPrivileges
-}
+    exit  # Exit the current script instance
+} 
 
 
 function Clear-TempFiles {
