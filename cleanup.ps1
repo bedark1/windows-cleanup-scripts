@@ -309,7 +309,7 @@ function Activate-Windows {
         # Wait-Job -JobName * # Wait for all jobs (or specify a job name)
         # Get-Job | Receive-Job # Get output from the job (if any) 
 
-        Write-Host "Windows activation script running in the background. Check for results later." -ForegroundColor Green
+        Write-Host "Windows activation script running. Check Other Window." -ForegroundColor Green
     } 
     catch {
         Write-Host "An error occurred while starting the activation process: $($_.Exception.Message)" -ForegroundColor Red
@@ -317,15 +317,41 @@ function Activate-Windows {
 }
 
 function Activate-Office {
-    $scriptUrl = "https://get.activated.win"
-    $command = "irm $scriptUrl | iex"
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $command -Verb RunAs
-    Write-Host "Office activation script executed." -ForegroundColor Green
+    Write-Host "Office Activation in Process..."
+
+    # Download the activation script silently
+    $scriptContent = Invoke-WebRequest -Uri "https://massgrave.dev/get" -ErrorAction SilentlyContinue
+    if (-not $scriptContent) { 
+        Write-Host "Failed to download activation script. Check your internet connection." -ForegroundColor Red
+        return
+    }
+
+    # Execute the script in the background without displaying output
+    try {
+        Start-Job -ScriptBlock {
+            Invoke-Expression $using:scriptContent.Content | Out-Null
+        } | Out-Null 
+
+        # (Optional) You can uncomment the following lines to wait for the 
+        # background job to complete and check its status:
+        # Wait-Job -JobName * # Wait for all jobs (or specify a job name)
+        # Get-Job | Receive-Job # Get output from the job (if any) 
+
+        Write-Host "Office activation script running. Check Other Window." -ForegroundColor Green
+    } 
+    catch {
+        Write-Host "An error occurred while starting the activation process: $($_.Exception.Message)" -ForegroundColor Red
+    }
 }
+
 function DirectX-Tweak {
-    Write-Host "DirectX Tweak - Applying registry modifications..."
+    # Create a system restore point 
+    Create-RestorePoint -description "Before DirectX Tweak" 
+
+    Write-Host "DirectX Tweak - Applying registry modifications (if applicable)..."
     $registryPath = "HKLM:\SOFTWARE\Microsoft\DirectX"
 
+    # Combined registry values
     $registryValues = @{
         "D3D11_ALLOW_TILING"                        = 1
         "D3D12_CPU_PAGE_TABLE_ENABLED"              = 1
@@ -344,47 +370,60 @@ function DirectX-Tweak {
     }
 
     foreach ($valueName in $registryValues.Keys) {
-        if (-not (Test-Path "$registryPath\")) {
-            try {
-                New-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -PropertyType DWORD -Force | Out-Null
-                Write-Host "Created registry value: $valueName"
-            }
-            catch {
-                Write-Host "Failed to create registry value: $valueName"
-                Write-Host "Error: $_"
-            }
-        }
-        else {
+        if (Get-ItemProperty -Path $registryPath -Name $valueName -ErrorAction SilentlyContinue) { 
             try {
                 Set-ItemProperty -Path $registryPath -Name $valueName -Value $registryValues[$valueName] -ErrorAction Stop
                 Write-Host "Modified registry value: $valueName"
             }
             catch {
-                Write-Host "Failed to modify registry value: $valueName"
-                Write-Host "Error: $_"
+                Write-Host "Failed to modify registry value: $valueName. Error: $_" -ForegroundColor Red
             }
+        } 
+        else {
+            Write-Host "Registry value not found: $valueName (Skipping)"
         }
     }
 
-    Write-Host "DirectX Tweak - Registry modifications complete."
+    Write-Host "DirectX Tweak - Registry modifications complete." 
 }
 
 
 
 function Disable-PagingFile {
     Create-RestorePoint -description "Before Disabling Paging File"
+
+    Write-Host "Disabling Paging File..." 
+
+    # Get the current paging file configuration
+    $memoryManagement = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
+    $pagingFileSetting = Get-ItemPropertyValue -Path $memoryManagement -Name PagingFiles -ErrorAction SilentlyContinue
+
+    # If already disabled, inform the user and exit
+    if ($pagingFileSetting -eq "c:\pagefile.sys 0 0" -or $pagingFileSetting -eq "") { 
+        Write-Host "Paging File is already disabled or not configured." -ForegroundColor Yellow
+        return
+    } 
+
     try {
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys 0 0" -ErrorAction Stop
-        Write-Host "Disable-PagingFile  - Done" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Disable-PagingFile - Failed: $_" -ForegroundColor Red
+        # Store the original settings (for potential revert)
+        $originalPagingFileSetting = $pagingFileSetting 
+
+        # Disable the paging file
+        Set-ItemProperty -Path $memoryManagement -Name PagingFiles -Value "c:\pagefile.sys 0 0" -ErrorAction Stop
+
+        Write-Host "Paging File disabled successfully." -ForegroundColor Green
+
+    } catch {
+        Write-Host "Failed to disable Paging File: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
 function Apply-RegistryTweaks {
-    try {
-        $regContent = @"
+    Create-RestorePoint -description "Before Applying Registry Tweaks"
+
+    Write-Host "Applying Registry Tweaks..."
+
+    $regContent = @"
 Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power]
@@ -393,33 +432,6 @@ Windows Registry Editor Version 5.00
 "SleepCompatTest"=dword:00000001
 "SleepLatencyTest"=dword:00000001
 "TestStandby"=dword:00000001
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WbioSrvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PcaSvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TrkWks]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SysMain]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WSearch]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WMPNetworkSvc]
-"Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management]
 "ClearPageFileAtShutdown"=dword:00000001
@@ -433,173 +445,197 @@ Windows Registry Editor Version 5.00
 "AdditionalCriticalWorkerThreads"=dword:00000004
 "AdditionalDelayedWorkerThreads"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Executive]
-"AdditionalCriticalWorkerThreads"=dword:00000004
-"AdditionalDelayedWorkerThreads"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power]
 "IdleResiliency"=dword:00000001
 "IdleResiliencyCheckEnabled"=dword:00000001
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WbioSrvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PcaSvc]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TrkWks]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SysMain]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WSearch]
-"Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WMPNetworkSvc]
-"Start"=dword:00000004
 "@
-        $regFilePath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "registryTweaks.reg")
+
+    try {
+        $regFilePath = Join-Path $env:TEMP "registryTweaks.reg"
         $regContent | Out-File -FilePath $regFilePath -Encoding ascii -Force
-        Start-Process "regedit.exe" -ArgumentList "/s", $regFilePath -NoNewWindow -Wait
-        Write-Host "Apply-RegistryTweaks - Done" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Apply-RegistryTweaks - Failed: $_" -ForegroundColor Red
+
+        # Use the Registry provider for direct modification
+        New-Item -Path "HKLM:\SOFTWARE\Microsoft\DirectX" -ErrorAction SilentlyContinue
+        Get-Content $regFilePath | ForEach-Object {
+            Invoke-Expression "New-ItemProperty -Path $_.PSPath -Name $_.Property -Value $_.Value -PropertyType $_.PropertyType -Force | Out-Null"
+        }
+
+        Write-Host "Registry Tweaks applied successfully." -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to apply Registry Tweaks: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
+
 function Disable-UnnecessaryServices {
+    Create-RestorePoint -description "Before Disabling Unnecessary Services"
+    
+    Write-Host "Disabling Unnecessary Services..."
+    $services = @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")
+
     try {
-        $services = @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")
         foreach ($service in $services) {
-            Stop-Service -Name $service -Force -ErrorAction Stop
-            Set-Service -Name $service -StartupType Disabled -ErrorAction Stop
-            Write-Host "$service service disabled successfully."
+            # Combine Stop-Service and Set-Service for efficiency
+            Get-Service -Name $service | Stop-Service -Force -ErrorAction SilentlyContinue
+            Get-Service -Name $service | Set-Service -StartupType Disabled -ErrorAction SilentlyContinue 
+
+            if ((Get-Service -Name $service).Status -eq "Stopped") {
+                Write-Host "$service service disabled successfully." 
+            } else {
+                Write-Host "Failed to disable $service. It might be needed by another process." -ForegroundColor Yellow
+            }
         }
-        Write-Host "Disable-UnnecessaryServices - Done" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Disable-UnnecessaryServices - Failed: $_" -ForegroundColor Red
+
+        Write-Host "Unnecessary Services disabled." -ForegroundColor Green
+    } catch {
+        Write-Host "An error occurred while disabling services: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
 function Adjust-GraphicsAndMultimediaSettings {
+    Create-RestorePoint -description "Before Adjusting Graphics & Multimedia"
+
+    Write-Host "Adjusting Graphics and Multimedia Settings..."
+
     try {
-        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Multimedia\Audio" -Name "DisableProtectedAudioDG" -Value 1 -ErrorAction Stop
-        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Direct3D" -Name "ForceDriverVersion" -Value "9.18.13.2049" -ErrorAction Stop
-        Write-Host "Adjust-GraphicsAndMultimediaSettings - Done" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Adjust-GraphicsAndMultimediaSettings - Failed: $_" -ForegroundColor Red
+        # Disable Protected Audio (if it exists)
+        $audioPath = "HKCU:\Software\Microsoft\Multimedia\Audio"
+        if (Get-ItemProperty -Path $audioPath -Name DisableProtectedAudioDG -ErrorAction SilentlyContinue) {
+            Set-ItemProperty -Path $audioPath -Name DisableProtectedAudioDG -Value 1 -ErrorAction Stop
+            Write-Host "- Disabled Protected Audio."
+        }
+
+        # Set ForceDriverVersion (if the key exists)
+        $d3dPath = "HKCU:\Software\Microsoft\Direct3D"
+        if (Test-Path -Path $d3dPath) { 
+            Set-ItemProperty -Path $d3dPath -Name ForceDriverVersion -Value "9.18.13.2049" -ErrorAction Stop
+            Write-Host "- Set ForceDriverVersion to 9.18.13.2049." 
+        }
+
+        Write-Host "Graphics and Multimedia settings adjusted." -ForegroundColor Green
+
+    } catch {
+        Write-Host "Failed to adjust settings: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
 function Disable-WindowsUpdates {
+    Create-RestorePoint -description "Before Disabling Windows Updates"
+
+    Write-Host "Disabling Windows Updates..."
     try {
-        Stop-Service -Name wuauserv -Force -ErrorAction Stop
-        Set-Service -Name wuauserv -StartupType Disabled -ErrorAction Stop
-        Write-Host "Disable-WindowsUpdates - Done" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Disable-WindowsUpdates - Failed: $_" -ForegroundColor Red
+        # Stop and disable the Windows Update service
+        if ((Get-Service -Name wuauserv).Status -eq "Running") { 
+            Get-Service -Name wuauserv | Stop-Service -Force -ErrorAction Stop 
+        }
+        Get-Service -Name wuauserv | Set-Service -StartupType Disabled -ErrorAction Stop
+
+        Write-Host "Windows Update service disabled." -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to disable Windows Updates: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
 
 function Remove-WindowsBloatware {
+    Create-RestorePoint -description "Before Removing Bloatware"
+
+    Write-Host "Removing Windows Bloatware..."
+    $bloatwareApps = @(
+        "Microsoft.3DBuilder",
+        "Microsoft.BingFinance",
+        "Microsoft.BingNews",
+        "Microsoft.BingSports",
+        "Microsoft.BingWeather",
+        "Microsoft.GetHelp",
+        "Microsoft.Getstarted",
+        "Microsoft.MicrosoftOfficeHub",
+        "Microsoft.MicrosoftSolitaireCollection",
+        "Microsoft.MicrosoftStickyNotes",
+        "Microsoft.OneConnect",
+        "Microsoft.People",
+        "Microsoft.Print3D",
+        "Microsoft.SkypeApp",
+        "Microsoft.Wallet",
+        "Microsoft.WindowsFeedbackHub",
+        "Microsoft.XboxApp",
+        "Microsoft.ZuneMusic",
+        "Microsoft.ZuneVideo"
+    )
+
     try {
-        $bloatwareApps = @(
-            "Microsoft.3DBuilder",
-            "Microsoft.BingFinance",
-            "Microsoft.BingNews",
-            "Microsoft.BingSports",
-            "Microsoft.BingWeather",
-            "Microsoft.GetHelp",
-            "Microsoft.Getstarted",
-            "Microsoft.MicrosoftOfficeHub",
-            "Microsoft.MicrosoftSolitaireCollection",
-            "Microsoft.MicrosoftStickyNotes",
-            "Microsoft.OneConnect",
-            "Microsoft.People",
-            "Microsoft.Print3D",
-            "Microsoft.SkypeApp",
-            "Microsoft.Wallet",
-            "Microsoft.WindowsFeedbackHub",
-            "Microsoft.XboxApp",
-            "Microsoft.ZuneMusic",
-            "Microsoft.ZuneVideo"
-        )
         foreach ($app in $bloatwareApps) {
-            Remove-AppxPackage -Package $app -ErrorAction Stop
-            Write-Host "$app removed successfully."
+            # Check if the app is installed
+            if (Get-AppxPackage -Name $app -ErrorAction SilentlyContinue) {
+                Remove-AppxPackage -Package $app -ErrorAction Stop 
+                Write-Host "- $app removed successfully."
+            } else {
+                Write-Host "- $app is not installed." 
+            }
         }
-        Write-Host "Remove-WindowsBloatware - Done" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Remove-WindowsBloatware - Failed: $_" -ForegroundColor Red
+        Write-Host "Bloatware removal complete." -ForegroundColor Green
+    } catch {
+        Write-Host "An error occurred during bloatware removal: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
 
 function Disable-UnnecessaryStartupPrograms {
+    Create-RestorePoint -description "Before Disabling Startup Programs"
+
+    Write-Host "Disabling Unnecessary Startup Programs..."
+    $startupItems = @(
+        "OneDrive",
+        "Skype",
+        "Spotify",
+        "Cortana"
+    )
+
     try {
-        $startupItems = @(
-            "OneDrive",
-            "Skype",
-            "Spotify",
-            "Cortana"
-        )
         foreach ($item in $startupItems) {
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name $item -Value ""
-            Write-Host "$item disabled successfully."
+            # Check if the startup item exists
+            if (Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name $item -ErrorAction SilentlyContinue) {
+                Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name $item -Value "" 
+                Write-Host "- $item disabled from startup." 
+            } else {
+                Write-Host "- $item is not in the startup list."
+            }
         }
-        Write-Host "Disable-UnnecessaryStartupPrograms - Done" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Disable-UnnecessaryStartupPrograms - Failed: $_" -ForegroundColor Red
+        Write-Host "Unnecessary Startup Programs disabled." -ForegroundColor Green 
+    } catch {
+        Write-Host "An error occurred while disabling startup programs: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
 
 function Revert-AllChanges {
-    try {
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "PagingFiles" -Value "c:\pagefile.sys" -PassThru -ErrorAction Stop
-        Start-Service -Name wuauserv -ErrorAction Stop
-        Set-Service -Name wuauserv -StartupType Automatic -ErrorAction Stop
-        foreach ($service in @("SysMain", "WSearch", "DiagTrack", "dmwappushservice", "WMPNetworkSvc")) {
-            Start-Service -Name $service -ErrorAction Stop
-            Set-Service -Name $service -StartupType Auto -ErrorAction Stop
-        }
-        Write-Host "Revert-AllChanges - Done" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Revert-AllChanges - Failed: $_" -ForegroundColor Red
+    Write-Host "Reverting all changes..." -ForegroundColor Yellow
+    Write-Host "This will use System Restore and require a system restart."
+    if ((Read-Host -Prompt "Are you sure you want to proceed? (y/n)") -eq "y") {
+        rstrui.exe /restore /norestart 
+        Write-Host "System Restore initiated. Please follow the on-screen prompts."
+    } else {
+        Write-Host "Revert process cancelled."
     }
 }
 
+# ...[Your Optimized Functions]... 
 
 function Show-OptimizeMenu {
-    Write-Host "1. Optimize Windows Performance (All)"
-    Write-Host "2. Disable Paging File"
-    Write-Host "3. Apply Registry Tweaks"
-    Write-Host "4. Disable Unnecessary Services"
-    Write-Host "5. Adjust Graphics and Multimedia Settings"
-    Write-Host "6. Disable Windows Updates"
-    Write-Host "7. Remove Windows Bloatware"
-    Write-Host "8. Disable Unnecessary Startup Programs"
-    Write-Host "9. Revert All Changes"
-    Write-Host "10. Back to Main Menu"
+    Clear-Host # Clear the console for a cleaner menu
+    Write-Host "========================================"
+    Write-Host "          Optimize Windows           "
+    Write-Host "========================================"
+    Write-Host "1.  Optimize All (Recommended)"
+    Write-Host "2.  Disable Paging File"
+    Write-Host "3.  Apply Registry Tweaks"
+    Write-Host "4.  Disable Unnecessary Services"
+    Write-Host "5.  Adjust Graphics & Multimedia"
+    Write-Host "6.  Disable Windows Updates (Use with caution)" 
+    Write-Host "7.  Remove Windows Bloatware"
+    Write-Host "8.  Disable Unnecessary Startup Programs"
+    Write-Host "9.  Back to Main Menu"
+    Write-Host "----------------------------------------"
 }
-
 
 function Optimize-Performance {
     do {
@@ -608,65 +644,52 @@ function Optimize-Performance {
 
         switch ($optChoice) {
             1 { 
-                # Call each optimization function with feedback for "Optimize All"
+                Write-Host "Optimizing All: This might take a while..." -ForegroundColor Cyan
                 Create-RestorePoint -description "Before Optimize All"
                 Disable-PagingFile
-                Write-Host "Disable-PagingFile - Done" -ForegroundColor Green
-                
                 Apply-RegistryTweaks
-                Write-Host "Apply-RegistryTweaks - Done" -ForegroundColor Green
-
                 Disable-UnnecessaryServices 
-                Write-Host "Disable-UnnecessaryServices - Done" -ForegroundColor Green
-
                 Adjust-GraphicsAndMultimediaSettings
-                Write-Host "Adjust-GraphicsAndMultimediaSettings - Done" -ForegroundColor Green
-
                 Disable-WindowsUpdates 
-                Write-Host "Disable-WindowsUpdates - Done" -ForegroundColor Green
-
                 Remove-WindowsBloatware
-                Write-Host "Remove-WindowsBloatware - Done" -ForegroundColor Green
-
                 Disable-UnnecessaryStartupPrograms
-                Write-Host "Disable-UnnecessaryStartupPrograms - Done" -ForegroundColor Green 
-
-                break  # Only one break needed here
+                Write-Host "All optimizations applied." -ForegroundColor Green
+                break 
             }
-            2 { Create-RestorePoint -description "Before Disabling Paging File"; Disable-PagingFile } # No extra feedback for individual options
+            2 { Create-RestorePoint -description "Before Disabling Paging File"; Disable-PagingFile }
             3 { Create-RestorePoint -description "Before Applying Registry Tweaks"; Apply-RegistryTweaks }
             4 { Create-RestorePoint -description "Before Disabling Unnecessary Services"; Disable-UnnecessaryServices }
-            5 { Create-RestorePoint -description "Before Adjusting Graphics and Multimedia Settings"; Adjust-GraphicsAndMultimediaSettings }
+            5 { Create-RestorePoint -description "Before Adjusting Graphics & Multimedia"; Adjust-GraphicsAndMultimediaSettings }
             6 { Create-RestorePoint -description "Before Disabling Windows Updates"; Disable-WindowsUpdates }
-            7 { Create-RestorePoint -description "Before Removing Windows Bloatware"; Remove-WindowsBloatware }
-            8 { Create-RestorePoint -description "Before Disabling Unnecessary Startup Programs"; Disable-UnnecessaryStartupPrograms }
-            9 { Revert-AllChanges }
-            10 { Write-Host "Returning to Main Menu..."; break } 
-            default { Write-Host "Invalid choice. Please try again." } # Closing quote added!
-        }
-    } while ($optChoice -ne 10)
+            7 { Create-RestorePoint -description "Before Removing Bloatware"; Remove-WindowsBloatware }
+            8 { Create-RestorePoint -description "Before Disabling Startup Programs"; Disable-UnnecessaryStartupPrograms }
+            9 { break } # Go back to Main Menu
+            default { Write-Host "Invalid choice. Please try again." -ForegroundColor Red } 
+        } 
+    } while ($optChoice -ne 9)
 }
 
-
 function Show-MainMenu {
-    Write-Host -ForegroundColor Blue -NoNewline "`nWelcome To the All Included Script`nby h4n1 - bdark`n"
-    Write-Host -ForegroundColor Yellow -NoNewline "`nEnter your choice:`n"
-    Write-Host " Boost:" -ForegroundColor Blue
-    Write-Host " 1. Clear Cache"
-    Write-Host " 2. Optimize Windows Performance - Carefully! Restore Point will be Made" 
-    Write-Host " 3. Intelligent standby list cleaner (ISLC)`n"
-    Write-Host " DirectX:" -ForegroundColor Blue
-    Write-Host " 4. DirectX Tweak`n"
-    Write-Host " Security:" -ForegroundColor Blue
-    Write-Host " 5. Install Malwarebytes`n"
-    Write-Host " Internet:" -ForegroundColor Blue
-    Write-Host " 6. Bufferbloat and Internet Speed Test"
-    Write-Host " 7. Install IDM`n"
-    Write-Host " Microsoft:" -ForegroundColor Blue
-    Write-Host " 8. Install / Activate Windows"
-    Write-Host " 9. Install / Activate Office`n"
-    Write-Host " 10. Fix Windows Search Bar"
-    Write-Host " 11. Exit`n"
+    Clear-Host # Clear the console for a cleaner menu 
+    Write-Host -ForegroundColor Blue -NoNewline "`n  Windows Optimization Script"
+    Write-Host -ForegroundColor Blue -NoNewline "  by h4n1 - bdark`n"
+    Write-Host "========================================" -ForegroundColor Blue
+    Write-Host "  Choose an option:" -ForegroundColor Yellow
+
+    Write-Host "----------------------------------------"
+    Write-Host "1.  Clear Cache & Temp Files"
+    Write-Host "2.  Optimize Windows Performance"
+    Write-Host "3.  Intelligent Standby List Cleaner (ISLC)"
+    Write-Host "4.  DirectX Tweak"
+    Write-Host "5.  Install Malwarebytes"
+    Write-Host "6.  Bufferbloat & Internet Speed Test"
+    Write-Host "7.  Install IDM"
+    Write-Host "8.  Activate Windows"
+    Write-Host "9.  Activate Office"
+    Write-Host "10. Fix Windows Search Bar"
+    Write-Host "11. Revert All Changes (Using System Restore)"
+    Write-Host "12. Exit"
+    Write-Host "----------------------------------------"
 }
 
 
@@ -681,13 +704,13 @@ do {
         4 { DirectX-Tweak }
         5 { Install-MB }
         6 { Bufferbloat-SpeedTest }
-        7 { Run-IDM }
+        7 { RunIDM } 
         8 { Activate-Windows }
         9 { Activate-Office }
-        10 { Create-RestorePoint -description "Before fixing Windows Search Bar"; Fix-WindowsSearchBar }
-        11 { Write-Host "Exiting..."; break }
-        default { Write-Host "Invalid choice. Please try again." }
+        10 { Create-RestorePoint -description "Before Fixing Windows Search Bar"; Fix-WindowsSearchBar }
+        11 { Revert-AllChanges }
+        12 { Write-Host "Exiting..."; break }
+        default { Write-Host "Invalid choice. Please try again." -ForegroundColor Red }
     }
-} while ($choice -ne 11)
-
+} while ($choice -ne 12)
 
