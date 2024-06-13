@@ -291,25 +291,17 @@ function Install-ISLC {
 
 
 function Activate-Windows {
-    $scriptUrl = "https://massgrave.dev/get"  # Updated URL
+    $scriptUrl = "https://massgrave.dev/get"
 
     try {
-        # 1. Download the script content
+        # 1. Download the script content (without displaying it)
         Write-Host "Downloading Windows activation script..." -ForegroundColor Yellow
         $scriptContent = Invoke-WebRequest -Uri $scriptUrl -ErrorAction Stop
         Write-Host "Script downloaded." -ForegroundColor Green
 
-        # 2. Display the script content to the user 
-        Write-Host "The Windows activation script content is:" -ForegroundColor Yellow
-        Write-Host $scriptContent.Content -ForegroundColor Cyan
-        if ((Read-Host -Prompt "Do you want to review and execute this script? (y/n)") -ne "y") {
-            Write-Host "Skipping Windows activation." -ForegroundColor Yellow
-            return
-        }
-
-        # 3. Execute the script in the CURRENT PowerShell session (elevated)
+        # 2. Execute the script directly (no need for user confirmation)
         Write-Host "Executing Windows activation script..." -ForegroundColor Yellow
-        Invoke-Expression $scriptContent.Content 
+        Invoke-Expression $scriptContent.Content
         Write-Host "Windows activation script executed." -ForegroundColor Green
 
     } catch {
