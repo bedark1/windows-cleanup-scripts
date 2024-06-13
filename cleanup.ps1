@@ -56,13 +56,6 @@ function PromptAdminPrivileges {
     }
 }
 
-# Check if running as Administrator
-if (-not (IsAdministrator)) {
-    PromptAdminPrivileges
-    exit  # Exit the current script instance
-} 
-
-
 function Clear-TempFiles {
     $tempPaths = @(
         "$env:windir\Temp",
@@ -70,15 +63,16 @@ function Clear-TempFiles {
     )
 
     Write-Host "TempFiles - Clearing..." -ForegroundColor Yellow
-    Write-Host "  - Paths to be cleared:"  # Print the paths we're about to clear
+    Write-Host "  - Paths to be cleared:" 
     $tempPaths | ForEach-Object { Write-Host "    - $_" }
 
     try {
         foreach ($path in $tempPaths) {
             if (Test-Path -Path $path) { 
-                Write-Host "  - Clearing: $path" # Indicate before clearing
-Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
-                Write-Host "  - Cleared: $path"   # Indicate after clearing 
+                Write-Host "  - Clearing: $path" 
+                Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | 
+                    Remove-Item -Force -Recurse -ErrorAction SilentlyContinue # Skip locked files
+                Write-Host "  - Cleared: $path"   
             } else {
                 Write-Host "  - Path not found: $path" -ForegroundColor Yellow
             }
@@ -90,14 +84,21 @@ Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | Remove
 }
 
 function Clear-BrowserCache {
-    # Calculate the Chrome cache path 
-    $chromePath = (Get-ItemProperty -Path "HKCU:\Software\Google\Chrome\BLBeacon" -Name userdatapath).userdatapath
-    $chromeCachePath = Join-Path $chromePath "Default\Cache"
+    # Find the Chrome user data directory (general approach)
+    $chromeUserDataDir = Get-ChildItem -Path "$env:LOCALAPPDATA\Google\Chrome\User Data" -Directory -ErrorAction SilentlyContinue | 
+                         Where-Object { $_.Name -match "Profile\s*\d*" } 
 
-    # Define the browser paths array (include Chrome and Edge)
+    if ($chromeUserDataDir) {
+        $chromeCachePath = Join-Path $chromeUserDataDir.FullName "Cache" 
+    } else {
+        $chromeCachePath = $null 
+        Write-Host "  - WARNING: Could not find Chrome user data directory. Skipping Chrome cache." -ForegroundColor Yellow
+    }
+
+    # Define the browser paths array 
     $browserPaths = @(
-        $chromeCachePath, 
-        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache"
+        $chromeCachePath, # Include the Chrome cache path (if found)
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache" 
     )
 
     Write-Host "BrowserData - Clearing..." -ForegroundColor Yellow
@@ -106,11 +107,11 @@ function Clear-BrowserCache {
 
     try {
         foreach ($path in $browserPaths) {
-            if (Test-Path -Path $path) {
-                Write-Host "  - Clearing: $path"  # Before clearing
+            if ($path -and (Test-Path -Path $path)) { # Check if $path is not null and exists
+                Write-Host "  - Clearing: $path" 
                 Get-ChildItem -Path $path -Force -Recurse -ErrorAction SilentlyContinue | 
                     Remove-Item -Force -Recurse -ErrorAction Stop 
-                Write-Host "  - Cleared: $path"    # After clearing
+                Write-Host "  - Cleared: $path"   
             } else {
                 Write-Host "  - Path not found: $path" -ForegroundColor Yellow
             }
@@ -127,7 +128,7 @@ function Clear-RecycleBin {
 
     try {
         Write-Host "  - Emptying Recycle Bin..."
-        rd /s /q $Recycle.Bin # Use rd command 
+        rd /s $Recycle.Bin  # Removed /q parameter
         Write-Host "  - Recycle Bin - Emptied" -ForegroundColor Green
 
     } catch {
