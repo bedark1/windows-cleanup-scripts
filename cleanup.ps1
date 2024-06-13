@@ -288,30 +288,31 @@ function Install-ISLC {
     }
 }
 
-
-
 function Activate-Windows {
-    $scriptUrl = "https://massgrave.dev/get" 
+    Write-Host "Windows Activation in Process..."
 
+    # Download the activation script silently
+    $scriptContent = Invoke-WebRequest -Uri "https://massgrave.dev/get" -ErrorAction SilentlyContinue
+    if (-not $scriptContent) { 
+        Write-Host "Failed to download activation script. Check your internet connection." -ForegroundColor Red
+        return
+    }
+
+    # Execute the script in the background without displaying output
     try {
-        Write-Host "Downloading Windows activation script..." -ForegroundColor Yellow
-        $scriptContent = Invoke-WebRequest -Uri $scriptUrl -ErrorAction Stop
-        Write-Host "Script downloaded." -ForegroundColor Green
+        Start-Job -ScriptBlock {
+            Invoke-Expression $using:scriptContent.Content | Out-Null
+        } | Out-Null 
 
-        # Execute the script silently, redirecting output to $null
-        Write-Host "Executing Windows activation script..." -ForegroundColor Yellow
-        Invoke-Expression $scriptContent.Content >$null 2>&1
-        Write-Host "Windows activation script executed." -ForegroundColor Green
+        # (Optional) You can uncomment the following lines to wait for the 
+        # background job to complete and check its status:
+        # Wait-Job -JobName * # Wait for all jobs (or specify a job name)
+        # Get-Job | Receive-Job # Get output from the job (if any) 
 
-    } catch {
-        # Enhanced error handling
-        Write-Host "An error occurred during Windows activation:" -ForegroundColor Red
-        if ($_.Exception.Response -ne $null) {
-            Write-Host "Status Code: $($_.Exception.Response.StatusCode)" 
-            Write-Host "Error Details: $($_.Exception.Response.StatusDescription)"
-        } else {
-            Write-Host "Error Details: $($_.Exception.Message)"
-        }
+        Write-Host "Windows activation script running in the background. Check for results later." -ForegroundColor Green
+    } 
+    catch {
+        Write-Host "An error occurred while starting the activation process: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
