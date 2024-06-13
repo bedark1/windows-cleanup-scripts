@@ -693,7 +693,11 @@ do {
     $choice = Read-Host -Prompt "Enter your choice"
 
     switch ($choice) {
-        1 { Clear-TempFiles; Clear-BrowserCache; Clear-RecycleBin }
+        1 { 
+            Clear-TempFiles 
+            Clear-BrowserCache 
+            Clear-RecycleBin 
+        } # Call each function on a separate line
         2 { Optimize-Performance }
         3 { Install-ISLC }
         4 { DirectX-Tweak }
