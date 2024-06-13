@@ -622,7 +622,7 @@ function Revert-AllChanges {
 # ...[Your Optimized Functions]... 
 
 function Show-OptimizeMenu {
-    Clear-Host # Clear the console for a cleaner menu
+    Clear-Host 
     Write-Host "========================================"
     Write-Host "          Optimize Windows           "
     Write-Host "========================================"
@@ -639,9 +639,14 @@ function Show-OptimizeMenu {
 }
 
 function Optimize-Performance {
+    Write-Host "DEBUG: Entering Optimize-Performance function" # Debug
+    Read-Host "Press Enter to continue..." # Pause
     do {
         Show-OptimizeMenu
         $optChoice = Read-Host "Enter your choice"
+
+        Write-Host "DEBUG: Optimize Menu choice: $optChoice" # Debug
+        Read-Host "Press Enter to continue..." # Pause
 
         switch ($optChoice) {
             1 { 
@@ -657,21 +662,19 @@ function Optimize-Performance {
                 Write-Host "All optimizations applied." -ForegroundColor Green
                 break 
             }
-            2 { Create-RestorePoint -description "Before Disabling Paging File"; Disable-PagingFile }
-            3 { Create-RestorePoint -description "Before Applying Registry Tweaks"; Apply-RegistryTweaks }
-            4 { Create-RestorePoint -description "Before Disabling Unnecessary Services"; Disable-UnnecessaryServices }
-            5 { Create-RestorePoint -description "Before Adjusting Graphics & Multimedia"; Adjust-GraphicsAndMultimediaSettings }
-            6 { Create-RestorePoint -description "Before Disabling Windows Updates"; Disable-WindowsUpdates }
-            7 { Create-RestorePoint -description "Before Removing Bloatware"; Remove-WindowsBloatware }
-            8 { Create-RestorePoint -description "Before Disabling Startup Programs"; Disable-UnnecessaryStartupPrograms }
-            9 { break } # Go back to Main Menu
+            # ... (Your other cases) ...
+            9 { break } 
             default { Write-Host "Invalid choice. Please try again." -ForegroundColor Red } 
         } 
+        Write-Host "DEBUG: End of Optimize Menu switch block" # Debug
+        Read-Host "Press Enter to continue..." # Pause
     } while ($optChoice -ne 9)
+    Write-Host "DEBUG: Exiting Optimize-Performance function" # Debug
+    Read-Host "Press Enter to continue..." # Pause
 }
 
 function Show-MainMenu {
-    Clear-Host # Clear the console for a cleaner menu 
+    Clear-Host  
     Write-Host -ForegroundColor Blue -NoNewline "`n  Windows Optimization Script"
     Write-Host -ForegroundColor Blue -NoNewline "  by h4n1 - bdark`n"
     Write-Host "========================================" -ForegroundColor Blue
@@ -695,27 +698,28 @@ function Show-MainMenu {
 
 
 do {
+    Write-Host "DEBUG: Start of Main Menu loop" # Debug
+    Read-Host "Press Enter to continue..." # Pause
     Show-MainMenu
-    $choice = Read-Host -Prompt "Enter your choice"
+    $choice = Read-Host "Enter your choice"
+
+    Write-Host "DEBUG: Main Menu choice: $choice" # Debug
+    Read-Host "Press Enter to continue..." # Pause
 
     switch ($choice) {
         1 { 
             Clear-TempFiles 
             Clear-BrowserCache 
-            Clear-RecycleBin 
-        } # Call each function on a separate line
-        2 { Optimize-Performance }
-        3 { Install-ISLC }
-        4 { DirectX-Tweak }
-        5 { Install-MB }
-        6 { Bufferbloat-SpeedTest }
-        7 { RunIDM } 
-        8 { Activate-Windows }
-        9 { Activate-Office }
-        10 { Create-RestorePoint -description "Before Fixing Windows Search Bar"; Fix-WindowsSearchBar }
-        11 { Revert-AllChanges }
+            Clear-RecycleBin
+            Write-Host "DEBUG: After cleanup functions" # Debug
+            Read-Host "Press Enter to continue..." # Pause
+        } 
+        # ... (Your other cases) ...
         12 { Write-Host "Exiting..."; break }
         default { Write-Host "Invalid choice. Please try again." -ForegroundColor Red }
     }
+    Write-Host "DEBUG: End of Main Menu switch block" # Debug
+    Read-Host "Press Enter to continue..." # Pause
 } while ($choice -ne 12)
-
+Write-Host "DEBUG: Outside of Main Menu loop (Exiting)" # Debug
+Read-Host "Press Enter to exit..." # Pause 
