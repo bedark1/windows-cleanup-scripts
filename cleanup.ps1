@@ -84,12 +84,11 @@ function Clear-TempFiles {
 }
 
 function Clear-BrowserCache {
-    # Find the Chrome user data directory (general approach)
-    $chromeUserDataDir = Get-ChildItem -Path "$env:LOCALAPPDATA\Google\Chrome\User Data" -Directory -ErrorAction SilentlyContinue | 
-                         Where-Object { $_.Name -match "Profile\s*\d*" } 
+    # Find the Chrome user data directory (corrected registry path)
+    $chromePath = (Get-ItemProperty -Path "HKCU:\Software\Google\Chrome\NativeMessagingHosts\com.google.chrome.broker" -Name userdatapath).userdatapath 
 
-    if ($chromeUserDataDir) {
-        $chromeCachePath = Join-Path $chromeUserDataDir.FullName "Cache" 
+    if ($chromePath) {
+        $chromeCachePath = Join-Path $chromePath "Default\Cache" 
     } else {
         $chromeCachePath = $null 
         Write-Host "  - WARNING: Could not find Chrome user data directory. Skipping Chrome cache." -ForegroundColor Yellow
@@ -97,7 +96,7 @@ function Clear-BrowserCache {
 
     # Define the browser paths array 
     $browserPaths = @(
-        $chromeCachePath, # Include the Chrome cache path (if found)
+        $chromeCachePath, 
         "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache" 
     )
 
